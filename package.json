@@ -1,0 +1,21 @@
+{
+  "name": "sb",
+  "version": "1.0.0",
+  "description": "bot for service",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon start index.js"
+  },
+  "keywords": [
+    "service",
+    "bot"
+  ],
+  "author": "Dzmitry Baradach <prevetlunatikam@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  }
+}
