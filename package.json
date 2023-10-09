@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "bot for service",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "nodemon start index.js"
   },
@@ -16,6 +17,8 @@
     "nodemon": "^3.0.1"
   },
   "dependencies": {
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "mongoose": "^7.6.0",
+    "telegraf": "^4.14.0"
   }
 }
