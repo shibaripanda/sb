@@ -4,6 +4,18 @@ const schema = new Schema({
     model: {
         type: String,
         required: true,
+    },
+    price: {
+        type: Number,
+        required: true,
+    },
+    image: {
+        type: Buffer,
+        // required: true,
+    },
+    idProd: {
+        type: String,
+        required: true,
     }
     }, {timestamps: true})
 

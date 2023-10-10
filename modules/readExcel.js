@@ -1,36 +1,85 @@
-import Excel from 'exceljs'
+import ExcelJS from 'exceljs'
 import { Accum } from "../models/Accum.js"
+import { Device } from "../models/Device.js"
 
-export const excel = async (list) => {
-    const workbook = new Excel.Workbook()
+export const upDateBaza = async () => {
+    const workbook = new ExcelJS.Workbook()
     await workbook.xlsx.readFile('./baza/baza1.xlsx')
+    // console.log(await workbook.media)
     
-    const worksheet = await workbook.getWorksheet(list)
+    // const worksheet = workbook.getWorksheet(list)
 
-    for(let i = 1; i < 25; i++){
-        const data = {
-            model: await worksheet.getCell('B' + i).value,
-            price: await worksheet.getCell('C' + i).value
+    workbook.eachSheet(async function(worksheet, sheetId) {
+
+        if(worksheet.name.includes('Караоке-микрофоны')){
+            console.log(worksheet._media[0].range)
         }
 
-        if(typeof(data.price) == 'number'){
-            
-            const accum = await Accum.findOne({model: data.model})
-            if(accum){
-                accum.price = data.price
-                await accum.save()
-            }
-            else{
-                const accum = await Accum({model: data.model, price: data.price})
-                await accum.save()
-            }
-        }
-    }
 
-    
+        
+        // const sheet = workbook.getWorksheet(worksheet.name)
 
+        // if(!worksheet.name.includes('Информация')){
+        //     console.log(worksheet.name)
+        // // console.log(worksheet.name)
+        // // console.log(sheetId)
+        //     for(let i = 3; i < 10000; i++){
+                
+        //         console.log(i)
+        //         let data
+        //         if(worksheet.name.includes('Аккумуляторы')){
+        //             data = {
+        //                 rowExist: worksheet.getCell('A' + i).value,
+        //                 model: worksheet.getCell('B' + i).value,
+        //                 price: worksheet.getCell('C' + i).value,
+        //                 exist: worksheet.getCell('E' + i).value
+        //             }
+        //         }
+        //         else{
+        //             // console.log(worksheet.getCell('B' + i).value)
+        //             data = {
+        //                 idProd: worksheet.name,
+        //                 rowExist: worksheet.getCell('A' + i).value,
+        //                 image: worksheet.getCell('B' + i).value,
+        //                 model: worksheet.getCell('C' + i).value,
+        //                 price: worksheet.getCell('D' + i).value,
+        //                 exist: worksheet.getCell('F' + i).value
+        //             } 
+        //         }
+        //         // console.log(data)
+        //         if(data.rowExist !== null){
+        //             if(typeof(data.price) == 'number' && data.exist !== 0){
+                    
+        //                 let product
 
+        //                 if(worksheet.name.includes('Аккумуляторы')){
+        //                     product = await Accum.findOne({model: data.model})
+        //                 }
+        //                 else{
+        //                     product = await Device.findOne({model: data.model})
+        //                 }
 
-    // console.log(worksheet.getCell('B300').value)
-    // console.log(worksheet.getCell('C300').value)
+        //                 if(product){
+        //                     // console.log(data.price)
+        //                     product.price = data.price
+        //                     // console.log(accum.price)
+        //                     await product.save()
+        //                 }
+        //                 else{
+        //                     if(worksheet.name.includes('Аккумуляторы')){
+        //                         product = await Accum({model: data.model, price: data.price})
+        //                     }
+        //                     else{
+        //                         product = await Device({model: data.model, price: data.price, image: data.image, idProd: data.idProd})
+        //                     }
+        //                     await product.save()
+        //                 } 
+        //             }    
+        //         }
+        //         else{
+        //             i = 10001
+        //         }
+        //     }
+        // }
+    })
 }

@@ -6,7 +6,7 @@ import { Device } from "./models/Device.js"
 import { Accum } from "./models/Accum.js"
 import { fix } from "./fixConst.js"
 import { userClient } from "./modules/userClient.js"
-import { excel } from "./modules/readExcel.js"
+import { upDateBaza } from "./modules/readExcel.js"
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -14,11 +14,16 @@ const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'ch
 async function test(){
     const status = await db()
     if(status){
-        console.log((await Device.find({})).length, (await User.find({})).length)
+        console.log((await Device.find({})).length, (await User.find({})).length, (await Accum.find({})).length)
     }
 
-    await excel('Аккумуляторы')
+    await upDateBaza()
+    // console.log(await accums.stats())
+    // await Accum.deleteMany({})
+    // await Device.deleteMany({})
+    // console.log(await Device.findOne({model: 'Караоке микрофон WSTER WS-838 (original) салатовый'}))
     console.log((await Accum.find({})).length)
+    console.log((await Device.find({})).length)
 
 }
 
