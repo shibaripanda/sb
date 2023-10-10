@@ -1,18 +1,20 @@
-import { mongoose }  from 'mongoose'
-
-const Schema = mongoose.Schema
-
+import { Schema, model }  from 'mongoose'
 
 const schema = new Schema({
     id: {
         type: Number,
         required: true,
     },
-    username: {
-        type: String,
+    historyRequest: {
+        type: Array,
+        required: true,
+    },
+    requestMode: {
+        type: Boolean,
+        default: true,
         required: true,
     }
     }, {timestamps: true})
 
+export const User = model(`User`, schema)
 
-export const User = mongoose.model(`User`, schema)

@@ -1,41 +1,63 @@
 import 'dotenv/config'
-import { Telegraf } from "telegraf"
+import { Telegraf, Markup } from "telegraf"
 import { db } from "./modules/db.js"
 import { User } from "./models/User.js"
 import { Device } from "./models/Device.js"
+import { Accum } from "./models/Accum.js"
+import { fix } from "./fixConst.js"
+import { userClient } from "./modules/userClient.js"
+import { excel } from "./modules/readExcel.js"
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
 
-
 async function test(){
-    await db()
-    // const dev = Device({model: 'Asus'})
-    // await dev.save()
-    const device = await Device.find({})
-    device.forEach(async (item) => {
-        await Device(item)
-    })
+    const status = await db()
+    if(status){
+        console.log((await Device.find({})).length, (await User.find({})).length)
+    }
 
-    await device[0].deleteOne()
-    // const device1 = device[0]
-    // await device1.deleteOne()
-    console.log(device)
-    // await device.save()
+    await excel('Аккумуляторы')
+    console.log((await Accum.find({})).length)
 
-    const user = await User.findOne({id: 1111, username: 'Dima'}, {_id: 0, username: 1})
-    console.log(user)
-    // const result = await user.deleteOne()
-    // console.log(result)++-
 }
-
 
 test()
 
-bot.start((ctx) => ctx.reply('Welcome'))
+bot.start(async (ctx) => {
+    try{
+        const user = await userClient(ctx)
 
+        let keyboard = false
 
+        console.log(user.requestMode)
 
+        if(user.historyRequest.length == 0){
+            keyboard = Markup.inlineKeyboard([
+                [Markup.button.callback(fix.textHistoryRequest, `1`)]
+            ])
+        }
+        await bot.telegram.sendMessage(ctx.from.id, fix.textHello + '\n' + fix.textCallInfo, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone) 
+    }
+    catch(e){
+        console.log('Start\n', e)
+    }
+})
+
+bot.on('message', async (ctx) => {
+    try{
+        const user = await userClient(ctx)
+
+        if(user.requestMode && ctx.message['text']){
+            console.log(ctx.message.text)
+        }
+
+    }
+    catch(e){
+        console.log('Message\n', e)
+    }
+
+})
 
 bot.launch(option)
 
