@@ -22,6 +22,21 @@ const schema = new Schema({
     cart: {
         type: Array,
         required: true,
+    },
+    lastMes: {
+        type: Number,
+        default: 0,
+        required: true,
+    },
+    startMes: {
+        type: Number,
+        default: 0,
+        required: true,
+    },
+    bufferSearch: {
+        type: Object,
+        default: [],
+        required: true,
     }
     }, {timestamps: true})
 

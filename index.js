@@ -42,10 +42,36 @@ test()
 
 bot.start(async (ctx) => {
     try{
+        await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
+        console.log(user.startMes)
         const keyboard = meinMenuDisplay(user)
         const text = fix.textHello + '\n' + fix.textCallInfo
-        await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+
+        // user.startMes = 0
+        //     user.save()
+
+        if(user.startMes == 0){
+            user.startMes = 1
+            user.save()
+        }
+        else{
+            user.startMes = user.startMes + 1
+            user.save()
+        }
+
+        if(user.lastMes == 0 || user.startMes > 3){
+            if(user.startMes > 3){
+                await bot.telegram.deleteMessage(ctx.from.id, user.lastMes).catch(fix.errorDone)
+            }
+            const mesText = await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+            user.lastMes = mesText.message_id
+            user.startMes = 1
+            user.save()
+        }
+        else{
+            await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, protect_content: true, disable_web_page_preview: true, parse_mode: 'HTML'}).catch(fix.errorDone)
+        }
     }
     catch(e){
         console.log('Start\n', e)
@@ -54,41 +80,34 @@ bot.start(async (ctx) => {
 
 bot.on('message', async (ctx) => {
     try{
+        await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
-            const result = (await resultSearch('Accum', ctx.message.text, 4)).filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
-            if(result.length !== 0){
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            user.bufferSearch = {item: (await resultSearch('Accum', ctx.message.text, 4)).filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1])), step: 0}
+            if(user.bufferSearch.item.length !== 0){
                 user.historyRequest.push(ctx.message.text)
-                let step = 0
-                for(let i of result){
                     let keyboard
-                    step++
-                    if(result.length == step && user.cart.length > 0){
+                    if(user.cart.length > 0){
                         keyboard = Markup.inlineKeyboard([
-                            [Markup.button.callback(fix.inCart, `inCart|${i._id}|${i.price}`)],
+                            [Markup.button.callback('Корзина', `cart`), Markup.button.callback(fix.textBack, `menu`)],
+                            [Markup.button.callback(fix.inCart, `inCart|${user.bufferSearch.item[user.bufferSearch.step]._id}|${user.bufferSearch.item[user.bufferSearch.step].price}`)],
                             [Markup.button.callback('Корзина', `cart`), Markup.button.callback(fix.textBack, `menu`)]
-                        ]) 
-                    }
-                    else if(result.length == step){
-                        keyboard = Markup.inlineKeyboard([
-                            [Markup.button.callback(fix.inCart, `inCart|${i._id}|${i.price}`)],
-                            [Markup.button.callback(fix.textBack, `menu`)]
                         ]) 
                     }
                     else{
                         keyboard = Markup.inlineKeyboard([
-                            [Markup.button.callback(fix.inCart, `inCart|${i._id}|${i.price}`)]
+                            [Markup.button.callback('Корзина', `cart`), Markup.button.callback(fix.textBack, `menu`)],
+                            [Markup.button.callback(fix.inCart,  `inCart|${user.bufferSearch.item[user.bufferSearch.step]._id}|${user.bufferSearch.item[user.bufferSearch.step].price}`)]
                         ]) 
                     }
-                    const text = i.model + '\n' + i.price
-                    await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
-                }
+                    const text = user.bufferSearch.item[user.bufferSearch.step].model + '\n' + user.bufferSearch.item[user.bufferSearch.step].price
+                    await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
             }
             else{
                 const keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])
                 const text = fix.textNoResult
-                await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+                await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
             }
         }
         await user.save()
@@ -107,19 +126,19 @@ bot.on('callback_query', async (ctx) => {
         let text
 
         if(value == 'accumOrder'){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             keyboard = keyboardAccum(user, value)
             text = fix.textCheckModel
             user.currentStatus = 'viewAccumModelList'
         }
         else if(value.split('|')[1] == 'accumOrder' && fix.modelsDevicesTel.map(item => item.text).includes(value.split('|')[0])){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])
             text = value.split('|')[0] + '\n' + fix.textModelTel
             user.currentStatus = `askAccumModel|${value.split('|')[0]}`
         }
         else if(value == 'menu'){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             keyboard = meinMenuDisplay(user)
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
@@ -135,7 +154,7 @@ bot.on('callback_query', async (ctx) => {
             text = `В корзине ${user.cart.length} товаров \nCумма ${await summa()} бел.руб.`
         }
         else if(value == 'cart'){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             await meinCart(user, ctx)
             const summa = async () => {
                 return await user.cart.map(item => item.price).reduce(function(a, b){return a + b}, 0)
@@ -144,7 +163,7 @@ bot.on('callback_query', async (ctx) => {
             keyboard = Markup.inlineKeyboard([[Markup.button.callback('Оформить всё', 'orderCartAll'), Markup.button.callback('Удалить всё', 'deleteCartAll')],[Markup.button.callback('Меню', `menu`)]])
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             const index = user.cart.findIndex(item => item.item == value.split('|')[1])
             user.cart.splice(index, 1)
             await user.save()
@@ -156,7 +175,7 @@ bot.on('callback_query', async (ctx) => {
             keyboard = Markup.inlineKeyboard([[Markup.button.callback('Оформить всё', 'orderCartAll'), Markup.button.callback('Удалить всё', 'deleteCartAll')],[Markup.button.callback('Меню', `menu`)]])
         }
         else if(value == 'deleteCartAll'){
-            await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
+            // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
             user.cart = []
             await user.save()
             keyboard = meinMenuDisplay(user)
@@ -164,7 +183,7 @@ bot.on('callback_query', async (ctx) => {
             user.currentStatus = 'Menu'
         }
 
-        await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+        await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
         await user.save()
     }
     catch(e){
