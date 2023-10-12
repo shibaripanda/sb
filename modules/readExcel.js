@@ -10,8 +10,8 @@ export const upDateBaza = async () => {
 
         const sheet = workbook.getWorksheet(worksheet.name)
 
-        // if(worksheet.name.includes('Караоке-микрофоны')){
-        if(!worksheet.name.includes('Информация')){
+        if(worksheet.name.includes('Аккумуляторы')){
+        // if(!worksheet.name.includes('Информация')){
             console.log(worksheet.name)
             for(let i = 3; i < 10000; i++){
                 let data

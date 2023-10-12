@@ -11,4 +11,5 @@ const schema = new Schema({
     }
     }, {timestamps: true})
 
+schema.index({model: 'text'})
 export const Accum = model(`Accum`, schema)
