@@ -16,9 +16,9 @@ async function test(){
     if(status){
         console.log((await Device.find({})).length, (await User.find({})).length, (await Accum.find({})).length)
     }
-
-    await upDateBaza()
-    // console.log(await accums.stats())
+    // await Accum.deleteMany({})
+    // await Device.deleteMany({})
+    // await upDateBaza()
     // await Accum.deleteMany({})
     // await Device.deleteMany({})
     // console.log(await Device.findOne({model: 'Караоке микрофон WSTER WS-838 (original) салатовый'}))
@@ -42,7 +42,8 @@ bot.start(async (ctx) => {
                 [Markup.button.callback(fix.textHistoryRequest, `1`)]
             ])
         }
-        await bot.telegram.sendMessage(ctx.from.id, fix.textHello + '\n' + fix.textCallInfo, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone) 
+        const result = await bot.telegram.sendPhoto(ctx.from.id, {source: './images/1582.jpeg', ...keyboard, parse_mode: 'HTML', caption: 'Hello'}).catch(fix.errorDone)
+        // await bot.telegram.sendMessage(ctx.from.id, fix.textHello + '\n' + fix.textCallInfo, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
     }
     catch(e){
         console.log('Start\n', e)
@@ -54,14 +55,26 @@ bot.on('message', async (ctx) => {
         const user = await userClient(ctx)
 
         if(user.requestMode && ctx.message['text']){
-            console.log(ctx.message.text)
+            const res = await Device.find({})
+            console.log(res.length)
+            const result = res.find(item => item.model.includes(ctx.message.text))
+            const keyboard = false
+            console.log(result)
+            const mes = await bot.telegram.sendPhoto(ctx.from.id, {source: result.image, ...keyboard, parse_mode: 'HTML', caption: result.model}).catch(fix.errorDone)
+            console.log(mes)
+            // .then(async (res) => {
+            //     console.log(res.length)
+            //     const result = res.find(item => item.model.includes(ctx.message.text))
+            //     console.log(result)
+            //     const keyboard = false
+            //     await bot.telegram.sendPhoto(ctx.from.id, {source: result.image, ...keyboard, parse_mode: 'HTML', caption: result.model}).catch(fix.errorDone)
+            //     console.log(ctx.message.text)
+            // })
         }
-
     }
     catch(e){
         console.log('Message\n', e)
     }
-
 })
 
 bot.launch(option)

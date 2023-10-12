@@ -10,8 +10,8 @@ const schema = new Schema({
         required: true,
     },
     image: {
-        type: Buffer,
-        // required: true,
+        type: String,
+        required: true,
     },
     idProd: {
         type: String,
