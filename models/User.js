@@ -13,6 +13,15 @@ const schema = new Schema({
         type: Boolean,
         default: true,
         required: true,
+    },
+    currentStatus: {
+        type: String,
+        default: 'Main',
+        required: true,
+    },
+    cart: {
+        type: Array,
+        required: true,
     }
     }, {timestamps: true})
 
