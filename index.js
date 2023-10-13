@@ -84,7 +84,8 @@ bot.on('message', async (ctx) => {
         const user = await userClient(ctx)
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
             // await bot.telegram.sendMessage(ctx.from.id, fix.border).catch(fix.errorDone)
-            user.bufferSearch = {item: (await resultSearch('Accum', ctx.message.text, 4)).filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1])), step: 0}
+            const array = (await resultSearch('Accum', ctx.message.text, 4)).filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
+            user.bufferSearch = {item: array, step: 0, len: array.length}
             if(user.bufferSearch.item.length !== 0){
                 user.historyRequest.push(ctx.message.text)
                     let keyboard
