@@ -37,6 +37,11 @@ const schema = new Schema({
         type: Object,
         default: [],
         required: true,
+    },
+    cartIndex: {
+        type: Number,
+        default: 0,
+        required: true,
     }
     }, {timestamps: true})
 

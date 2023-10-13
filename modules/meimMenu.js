@@ -10,7 +10,7 @@ export const meinMenuDisplay = (user) => {
         }
     
         if(user.cart.length > 0){
-            keyboardArray.push([Markup.button.callback('Корзина', `cart`)])     
+            keyboardArray.push([Markup.button.callback(fix.сart + ` (${user.cart.length})`, `cart`)])     
         }
 
         return Markup.inlineKeyboard(keyboardArray)

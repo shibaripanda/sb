@@ -10,9 +10,9 @@ export const keyboardAccum = (user, value) => {
         }
     
         if(user.cart.length > 0){
-            keyboardArray.push([Markup.button.callback('Корзина', `cart`)])     
+            keyboardArray.push([Markup.button.callback(fix.сart + ` (${user.cart.length})`, `cart`)])     
         }
-        keyboardArray.push([Markup.button.callback('Меню', `menu`)])
+        keyboardArray.push([Markup.button.callback(fix.menu, `menu`)])
 
         return Markup.inlineKeyboard(keyboardArray)
     }   
