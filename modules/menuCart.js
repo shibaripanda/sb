@@ -1,6 +1,7 @@
 import { Markup } from "telegraf"
 import { fix } from "../fixConst.js"
 import { Accum } from "../models/Accum.js"
+import { perenos } from "./perenos.js"
 
 const funBut = async (item, count, name) => {
 
@@ -19,6 +20,13 @@ const funBut = async (item, count, name) => {
     }
 }
 
+async function oneOrMore(count){
+    if(count == 1){
+        return 'Удалить'
+    }
+    return 'Удалить 1'
+}
+
 export const pageCartKeyboardAndText = async (user) => {
     let keyboard
     let text
@@ -31,12 +39,22 @@ export const pageCartKeyboardAndText = async (user) => {
             user.cart.push({item: curItem._id, price: curItem.price, orig: curItem})
         }
     }
-    if(user.cart.length !== 0){    
+    if(user.cart.length !== 0){
+        
+        let cartInbox = ''
+        const inbox = user.cart.filter(item1 => item1.orig.model == user.cart[user.cartIndex].orig.model)
+        if(inbox.length == 1){
+            cartInbox = ``
+        }
+        else if(inbox.length > 1){
+            cartInbox = `(У вас в корзине ${inbox.length} таких товара)`
+        }     
+        
         keyboard = Markup.inlineKeyboard([
             [await funBut(user.cartIndex, user.cart.length, 'Назад'), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, 'Следующий')],
-            [Markup.button.callback('Удалить', `deleteFromCart|${user.cart[user.cartIndex]._id}`)],
-            [Markup.button.callback('Оформить всё', 'orderCartAll')],
-            [Markup.button.callback('Удалить всё', 'deleteCartAll')],
+            [Markup.button.callback(await oneOrMore(inbox.length), `deleteFromCart|${user.cart[user.cartIndex]._id}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].orig._id}|${user.cart[user.cartIndex].orig.price}` )],//`deleteFromCart|${user.cart[user.cartIndex]._id}`
+            [Markup.button.callback('Оформить всю корзину', 'orderCartAll')],
+            [Markup.button.callback('Удалить всю корзину', 'deleteCartAll')],
             [Markup.button.callback(fix.menu, `menu`)]
         ])
 
@@ -44,7 +62,9 @@ export const pageCartKeyboardAndText = async (user) => {
         return await user.cart.map(item => item.price).reduce(function(a, b){return a + b}, 0)
         }
 
-        text = `В корзине ${user.cart.length} товаров \nCумма ${await summa()} бел.руб.\n\n# ${user.cartIndex + 1}\n` + user.cart[user.cartIndex].orig.model + '\n' + user.cart[user.cartIndex].orig.price
+           
+
+        text = `В корзине ${user.cart.length} товаров \nCумма ${await summa()} бел.руб.\n\n# ${user.cartIndex + 1}\n` +  await perenos(user.cart[user.cartIndex].orig.model) + '\n' + user.cart[user.cartIndex].orig.price  + '\n' +  cartInbox
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.menu, `menu`)])

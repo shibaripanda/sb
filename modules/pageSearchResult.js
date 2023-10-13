@@ -1,5 +1,6 @@
 import { fix } from "../fixConst.js"
 import { Markup } from "telegraf"
+import { perenos } from "./perenos.js"
 
 const funBut = async (item, count, name) => {
 
@@ -35,8 +36,16 @@ export const pageSearchResultKeyboardAndText = async (user) => {
             keyboard = Markup.inlineKeyboard([
                 [await funBut(item2.step, item2.len, 'Назад'), Markup.button.callback(fix.inCart,  `inCart|${item._id}|${item.price}`), await funBut(item2.step, item2.len, 'Следующий')],
                 [await cartBut(user.cart.length, user.cart.length), Markup.button.callback(fix.menu, `menu`)]
-            ]) 
-        text = item.model + '\n' + item.price
+            ])
+        let cartInbox = ''
+        const inbox = user.cart.filter(item1 => item1.item == item._id)
+        if(inbox.length == 1){
+            cartInbox = `(Уже в корзине)`
+        }
+        else if(inbox.length > 1){
+            cartInbox = `(Уже в корзине ${inbox.length} шт)`
+        }     
+        text = await perenos(item.model) + '\n' + item.price + '\n' + cartInbox
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])

@@ -73,9 +73,9 @@ bot.on('message', async (ctx) => {
         const user = await userClient(ctx)
         let result
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-            const array = (await resultSearch('Accum', ctx.message.text, 4)).filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
+            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))//.filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
             user.bufferSearch = {item: array, step: 0, len: array.length}
-            user.historyRequest.push(ctx.message.text)
+            user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
             result = await pageSearchResultKeyboardAndText(user)
         }
 
@@ -116,6 +116,13 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
+        else if(value.split('|')[0] == 'inCartinCart'){
+            user.cart.push({item: value.split('|')[1], price: Number(value.split('|')[2])})
+            user.cartIndex = user.cartIndex + 1
+            const result = await pageCartKeyboardAndText(user)
+            keyboard = result.keyboard
+            text = result.text
+        }
         else if(value == 'cart'){
             user.cartIndex = 0
             const result = await pageCartKeyboardAndText(user)
@@ -135,8 +142,12 @@ bot.on('callback_query', async (ctx) => {
             text = result.text
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
+            console.log(user.cartIndex)
             const index = user.cart.findIndex(item => item.item == value.split('|')[1])
             user.cart.splice(index, 1)
+            if(user.cartIndex > 0){
+                user.cartIndex = user.cartIndex - 1  
+            }
             const result = await pageCartKeyboardAndText(user, ctx)
             keyboard = result.keyboard
             text = result.text
