@@ -22,7 +22,8 @@ export const fix = {
         {name:'Honor', text: 'honor'},
         {name:'Nokia', text: 'nokia'},
         {name:'Vivo', text: 'vivo'},
-        {name:'ZTE', text: 'zte'}
+        {name:'ZTE', text: 'zte'},
+        {name:'Sony', text: 'sony'}
     ],
     mainMenuButtons: [
         {name:'Заказать батарею к телефону', text: 'accumOrder'},

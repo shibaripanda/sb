@@ -71,9 +71,9 @@ bot.on('message', async (ctx) => {
     try{
         await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
-        let result
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))//.filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
+            const minus = fix.modelsDevicesTel.map(item => item.text)
+            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text + ' -nokia', 4))//.filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
             user.bufferSearch = {item: array, step: 0, len: array.length}
             user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
             result = await pageSearchResultKeyboardAndText(user)
