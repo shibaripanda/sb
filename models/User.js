@@ -42,6 +42,11 @@ const schema = new Schema({
         type: Number,
         default: 0,
         required: true,
+    },
+    lastProd: {
+        type: Array,
+        default: [],
+        required: true,
     }
     }, {timestamps: true})
 

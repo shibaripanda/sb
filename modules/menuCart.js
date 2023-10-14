@@ -4,6 +4,7 @@ import { Accum } from "../models/Accum.js"
 import { perenos } from "./perenos.js"
 
 const funBut = async (item, count, name) => {
+    console.log(item + ' ' + count)
 
     if(item == 0 && name == 'Назад'){
         return Markup.button.callback(name, `cart`, 'hide')
@@ -36,9 +37,17 @@ export const pageCartKeyboardAndText = async (user) => {
     for(let i of newAr){
         const curItem = await Accum.findOne({_id: i.item})
         if(curItem){
-            user.cart.push({item: curItem._id, price: curItem.price, orig: curItem})
+            user.cart.push({
+                item: curItem._id,
+                price: curItem.price,
+                orig: curItem
+            })
         }
     }
+    // console.log(user.cart)
+    user.cart = user.cart.sort((a,b) => {return a.orig.model.length - b.orig.model.length})
+    // console.log(user.cart)
+
     if(user.cart.length !== 0){
         
         let cartInbox = ''
