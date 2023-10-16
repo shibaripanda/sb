@@ -3,13 +3,13 @@ import { fix } from "../fixConst.js"
 import { Accum } from "../models/Accum.js"
 import { perenos } from "./perenos.js"
 
-const funBut = async (item, count, name) => {
-    console.log(item + ' ' + count)
+const funBut = async (item, count, name, inbox) => {
+    console.log(item + ' ' + count + ' ' + inbox)
 
-    if(item == 0 && name == 'Назад'){
+    if(item == 0 && name == 'Назад' || count == inbox){
         return Markup.button.callback(name, `cart`, 'hide')
     }
-    else if(count - 1 == item && name == 'Следующий'){
+    else if(count - 1 == item && name == 'Следующий' || count == inbox){
         return Markup.button.callback(name, `cart`, 'hide')
     }
 
@@ -60,8 +60,8 @@ export const pageCartKeyboardAndText = async (user) => {
         }     
         
         keyboard = Markup.inlineKeyboard([
-            [await funBut(user.cartIndex, user.cart.length, 'Назад'), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, 'Следующий')],
-            [Markup.button.callback(await oneOrMore(inbox.length), `deleteFromCart|${user.cart[user.cartIndex]._id}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].orig._id}|${user.cart[user.cartIndex].orig.price}` )],//`deleteFromCart|${user.cart[user.cartIndex]._id}`
+            [await funBut(user.cartIndex, user.cart.length, 'Назад', inbox.length), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, 'Следующий', inbox.length)],
+            [Markup.button.callback(await oneOrMore(inbox.length), `deleteFromCart|${user.cart[user.cartIndex].orig._id}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].orig._id}|${user.cart[user.cartIndex].orig.price}` )],//`deleteFromCart|${user.cart[user.cartIndex]._id}`
             [Markup.button.callback('Оформить всю корзину', 'orderCartAll')],
             [Markup.button.callback('Удалить всю корзину', 'deleteCartAll')],
             [Markup.button.callback(fix.menu, `menu`)]

@@ -71,6 +71,7 @@ bot.on('message', async (ctx) => {
     try{
         await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
+        let result
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
             // const minus = fix.modelsDevicesTel.map(item => item.text)
             const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))//.filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
@@ -127,23 +128,19 @@ bot.on('callback_query', async (ctx) => {
         }
         else if(value == 'cart'){
             user.cartIndex = 0
-            user.lastProd = []
+            // user.lastProd = []
             const result = await pageCartKeyboardAndText(user)
-            user.lastProd.push(user.cart[user.cartIndex].orig.model)
+            // user.lastProd.push(user.cart[user.cartIndex].orig.model)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'nextCartItem'){
             
-    console.log('------------')
-            
-            user.cartIndex = user.cartIndex + 1
-            
+            console.log('------------')
            
             for (let i = 1; i > 0; i++){
 
-                if(user.cart.length - 1 < user.cartIndex){
-                    user.cartIndex = user.cartIndex - 1
+                if(user.cart.length - 1 == user.cartIndex){
                     break
                 }
                 else{
@@ -151,63 +148,47 @@ bot.on('callback_query', async (ctx) => {
                         user.cartIndex = user.cartIndex + 1 
                     }
                     else{
-                       break
+                        user.cartIndex = user.cartIndex + 1
+                        break
                     }
                 }  
             }
 
-            
-
-            // for (let i = 1; i > 0; i++){
-            //     if(user.lastProd.includes(user.cart[user.cartIndex].orig.model)){
-            //         if(user.cart.length - 1 == user.cartIndex){
-            //             user.cartIndex = 0
-            //             user.lastProd = []
-            //         }
-            //         else{
-            //           user.cartIndex = user.cartIndex + 1  
-            //         }
-            //     }
-            //     else{
-            //         const lenCurProd = user.cart.filter(item1 => item1.orig.model == user.cart[user.cartIndex].orig.model)
-            //         if(lenCurProd.length > 1){
-            //             user.cartIndex = user.cartIndex + lenCurProd.length - 1
-            //         }
-            //           i = -1
-            //         user.lastProd.push(user.cart[user.cartIndex].orig.model)
-            //     }
-            // }
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'prevCartItem'){
             
-    console.log('------------')
+            console.log('------------')
 
-            user.cartIndex = user.cartIndex - 1
+            
+
             for (let i = 1; i > 0; i++){
-                if(user.cartIndex < 0){
-                    user.cartIndex = 0
-                    user.lastProd = []
+
+                if(0 == user.cartIndex){
+                    break
                 }
                 else{
-                    if(user.cart[user.cartIndex + 1].orig.model == user.cart[user.cartIndex].orig.model){
+                    if(user.cart[user.cartIndex - 1].orig.model == user.cart[user.cartIndex].orig.model){
                         user.cartIndex = user.cartIndex - 1 
                     }
                     else{
-                        i = -1
-                        user.lastProd.push(user.cart[user.cartIndex].orig.model)  
+                        user.cartIndex = user.cartIndex - 1
+                        break
                     }
-                }
+                }  
             }
+
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
             console.log(user.cartIndex)
+            console.log(value.split('|')[1])
             const index = user.cart.findIndex(item => item.item == value.split('|')[1])
+            console.log(index)
             user.cart.splice(index, 1)
             if(user.cartIndex > 0){
                 user.cartIndex = user.cartIndex - 1  
@@ -228,7 +209,7 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
-         else if(value == 'prevSearchResult'){
+        else if(value == 'prevSearchResult'){
             user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step - 1, len: user.bufferSearch.len}
             const result = await pageSearchResultKeyboardAndText(user)
             keyboard = result.keyboard
