@@ -51,6 +51,7 @@ bot.start(async (ctx) => {
 
         if(user.lastMes == 0 || user.startMes > 3){
             if(user.startMes > 3){
+                await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', '.', {protect_content: true, disable_web_page_preview: true, parse_mode: 'HTML'}).catch(fix.errorDone)
                 await bot.telegram.deleteMessage(ctx.from.id, user.lastMes).catch(fix.errorDone)
             }
             const mesText = await bot.telegram.sendMessage(ctx.from.id, text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
