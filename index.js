@@ -112,6 +112,12 @@ bot.on('callback_query', async (ctx) => {
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
         }
+        else if(value == 'cart'){
+            user.cartIndex = 0
+            const result = await pageCartKeyboardAndText(user)
+            keyboard = result.keyboard
+            text = result.text
+        }
         else if(value.split('|')[0] == 'inCart'){
 
             const itemTest = value.split('|')[1]
@@ -164,24 +170,6 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
-        else if(value == 'cart'){
-            user.cartIndex = 0
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-        }
-        else if(value == 'nextCartItem'){
-            user.cartIndex++
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-        }
-        else if(value == 'prevCartItem'){
-            user.cartIndex--
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-        }
         else if(value.split('|')[0] == 'deleteFromCart'){
             user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
             
@@ -201,6 +189,18 @@ bot.on('callback_query', async (ctx) => {
             keyboard = await meinMenuDisplay(user)
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
+        }
+        else if(value == 'nextCartItem'){
+            user.cartIndex++
+            const result = await pageCartKeyboardAndText(user)
+            keyboard = result.keyboard
+            text = result.text
+        }
+        else if(value == 'prevCartItem'){
+            user.cartIndex--
+            const result = await pageCartKeyboardAndText(user)
+            keyboard = result.keyboard
+            text = result.text
         }
         else if(value == 'nextSearchResult'){
             user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step + 1, len: user.bufferSearch.len}
