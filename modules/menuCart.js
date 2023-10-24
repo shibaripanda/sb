@@ -27,6 +27,26 @@ async function oneOrMore(count){
     return 'Удалить 1'
 }
 
+const funButOrderCart = async (count) => {
+
+    if(count == 1){
+        return Markup.button.callback('Оформить всю корзину', 'orderCartAll', 'hide')
+    }
+    else{
+        return Markup.button.callback('Оформить всю корзину', 'orderCartAll')
+    }
+}
+
+const funButCleanCart = async (count) => {
+
+    if(count == 1){
+        return Markup.button.callback('Удалить всю корзину', 'deleteCartAll', 'hide')
+    }
+    else{
+        return Markup.button.callback('Удалить всю корзину', 'deleteCartAll')
+    }
+}
+
 export const pageCartKeyboardAndText = async (user) => {
     let keyboard
     let text
@@ -34,10 +54,10 @@ export const pageCartKeyboardAndText = async (user) => {
         const itemThis = await Accum.findOne({_id: user.cart[user.cartIndex].origId})
 
         keyboard = Markup.inlineKeyboard([
-            [await funBut(user.cartIndex, user.cart.length, '⬅️'), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, '➡️')],
-            [Markup.button.callback(await oneOrMore(user.cart[user.cartIndex].inch), `deleteFromCart|${user.cart[user.cartIndex].origId}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].origId}`)],
-            [Markup.button.callback('Оформить всю корзину', 'orderCartAll')],
-            [Markup.button.callback('Удалить всю корзину', 'deleteCartAll')],
+            [await funBut(user.cartIndex, user.cart.length, '⬅️'), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex].origId}|${user.cart[user.cartIndex].inch}`), await funBut(user.cartIndex, user.cart.length, '➡️')],
+            [Markup.button.callback(await oneOrMore(user.cart[user.cartIndex].inch), `deleteFromCart|${user.cart[user.cartIndex].origId}`), Markup.button.callback('Добавить 1', `inCartinCart|${user.cart[user.cartIndex].origId}`)],
+            [await funButOrderCart(user.cart.length)],
+            [await funButCleanCart(user.cart.length)],
             [Markup.button.callback(fix.menu, `menu`)]
         ])
 

@@ -12,6 +12,7 @@ import { meinMenuDisplay } from './modules/meimMenu.js'
 import { keyboardAccum } from './modules/menuAccum.js'
 import { pageCartKeyboardAndText } from './modules/menuCart.js'
 import { pageSearchResultKeyboardAndText } from './modules/pageSearchResult.js'
+import { userInfo } from './modules/userInfo.js'
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -181,6 +182,15 @@ bot.on('callback_query', async (ctx) => {
             }
             await User.updateOne({id: ctx.from.id}, {cart: user.cart})
             const result = await pageCartKeyboardAndText(user, ctx)
+            keyboard = result.keyboard
+            text = result.text
+        }
+        else if(value.split('|')[0] == 'order'){
+            if(user.clientStatus == false){
+
+            }
+            
+            const result = await userInfo(user, ctx)
             keyboard = result.keyboard
             text = result.text
         }

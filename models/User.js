@@ -47,6 +47,41 @@ const schema = new Schema({
         type: Array,
         default: [],
         required: true,
+    },
+    name: {
+        type: String,
+        default: 'Имя',
+        required: true,
+    },
+    surname: {
+        type: String,
+        default: 'Фамилия',
+        required: true,
+    },
+    lastname: {
+        type: String,
+        default: 'Отчество',
+        required: true,
+    },
+    tel: {
+        type: Number,
+        default: 375,
+        required: true,
+    },
+    email: {
+        type: String,
+        default: 'email',
+        required: true,
+    },
+    clientStatus: {
+        type: Boolean,
+        default: false,
+        required: true,
+    },
+    evropochta: {
+        type: Number,
+        default: 0,
+        required: true,
     }
     }, {timestamps: true})
 
