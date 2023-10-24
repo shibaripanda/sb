@@ -39,7 +39,7 @@ bot.start(async (ctx) => {
     try{
         await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
-        const keyboard = meinMenuDisplay(user)
+        const keyboard = await meinMenuDisplay(user)
         const text = fix.textHello + '\n' + fix.textCallInfo
 
         if(user.startMes == 0){
@@ -73,11 +73,9 @@ bot.on('message', async (ctx) => {
         const user = await userClient(ctx)
         let result
         if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-            // const minus = fix.modelsDevicesTel.map(item => item.text)
-            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))//.filter(item => item.model.toLowerCase().includes(user.currentStatus.split('|')[1]))
-            user.bufferSearch = {item: array, step: 0, len: array.length}
+            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))
+            user.bufferSearch = {item: array.map(item => String(item._id)), step: 0, len: array.length}
             user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
-            
             result = await pageSearchResultKeyboardAndText(user)
         }
 
@@ -94,12 +92,12 @@ bot.on('callback_query', async (ctx) => {
         await ctx.answerCbQuery()
         let value = await ctx.update.callback_query.data
         const user = await userClient(ctx)
-        // console.log(user.bufferSearch.item)
+        console.log(value)
         let keyboard
         let text
 
         if(value == 'accumOrder'){
-            keyboard = keyboardAccum(user, value)
+            keyboard = await keyboardAccum(user, value)
             text = fix.textCheckModel
             user.currentStatus = 'viewAccumModelList'
         }
@@ -109,97 +107,97 @@ bot.on('callback_query', async (ctx) => {
             user.currentStatus = `askAccumModel|${value.split('|')[0]}`
         }
         else if(value == 'menu'){
-            keyboard = meinMenuDisplay(user)
+            keyboard = await meinMenuDisplay(user)
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
         }
         else if(value.split('|')[0] == 'inCart'){
-            user.cart.push({item: value.split('|')[1], price: Number(value.split('|')[2])})
+
+            const itemTest = value.split('|')[1]
+
+            const curItem = await Accum.findOne({_id: itemTest})
+
+            if(curItem){
+                const countItemsInCart = user.cart.find(item => item.origId == itemTest)
+                
+                if(countItemsInCart){
+                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                    await User.updateOne({id: ctx.from.id}, {cart: user.cart})
+                }
+                else{
+                    user.cart.push({
+                            origId: String(curItem._id),
+                            price: curItem.price,
+                            inch: 1
+                        })
+                } 
+            }
+
             const result = await pageSearchResultKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value.split('|')[0] == 'inCartinCart'){
-            user.cart.push({item: value.split('|')[1], price: Number(value.split('|')[2])})
-            user.cartIndex = user.cartIndex + 1
+
+            const itemTest = value.split('|')[1]
+
+            const curItem = await Accum.findOne({_id: itemTest})
+
+            if(curItem){
+                const countItemsInCart = user.cart.find(item => item.origId == itemTest)
+                
+                if(countItemsInCart){
+                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                    await User.updateOne({id: ctx.from.id}, {cart: user.cart})
+                }
+                else{
+                    user.cart.push({
+                            origId: String(curItem._id),
+                            price: curItem.price,
+                            inch: 1
+                        })
+                }
+            }
+
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'cart'){
             user.cartIndex = 0
-            // user.lastProd = []
             const result = await pageCartKeyboardAndText(user)
-            // user.lastProd.push(user.cart[user.cartIndex].orig.model)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'nextCartItem'){
-            
-            console.log('------------')
-           
-            for (let i = 1; i > 0; i++){
-
-                if(user.cart.length - 1 == user.cartIndex){
-                    break
-                }
-                else{
-                    if(user.cart[user.cartIndex + 1].orig.model == user.cart[user.cartIndex].orig.model){
-                        user.cartIndex = user.cartIndex + 1 
-                    }
-                    else{
-                        user.cartIndex = user.cartIndex + 1
-                        break
-                    }
-                }  
-            }
-
+            user.cartIndex++
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'prevCartItem'){
-            
-            console.log('------------')
-
-            
-
-            for (let i = 1; i > 0; i++){
-
-                if(0 == user.cartIndex){
-                    break
-                }
-                else{
-                    if(user.cart[user.cartIndex - 1].orig.model == user.cart[user.cartIndex].orig.model){
-                        user.cartIndex = user.cartIndex - 1 
-                    }
-                    else{
-                        user.cartIndex = user.cartIndex - 1
-                        break
-                    }
-                }  
-            }
-
+            user.cartIndex--
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
-            console.log(user.cartIndex)
-            console.log(value.split('|')[1])
-            const index = user.cart.findIndex(item => item.item == value.split('|')[1])
-            console.log(index)
-            user.cart.splice(index, 1)
-            if(user.cartIndex > 0){
-                user.cartIndex = user.cartIndex - 1  
+            user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
+            
+            if(user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch == 0){
+                user.cart.splice(user.cart.findIndex(item => item.origId == value.split('|')[1]), 1)
+                if(user.cartIndex > 0){
+                  user.cartIndex--   
+                }
             }
+            await User.updateOne({id: ctx.from.id}, {cart: user.cart})
             const result = await pageCartKeyboardAndText(user, ctx)
             keyboard = result.keyboard
             text = result.text
         }
         else if(value == 'deleteCartAll'){
             user.cart = []
-            keyboard = meinMenuDisplay(user)
+            keyboard = await meinMenuDisplay(user)
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
         }

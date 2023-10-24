@@ -3,17 +3,16 @@ import { fix } from "../fixConst.js"
 import { Accum } from "../models/Accum.js"
 import { perenos } from "./perenos.js"
 
-const funBut = async (item, count, name, inbox) => {
-    console.log(item + ' ' + count + ' ' + inbox)
+const funBut = async (item, count, name) => {
 
-    if(item == 0 && name == 'Назад' || count == inbox){
+    if(item == 0 && name == '⬅️'){
         return Markup.button.callback(name, `cart`, 'hide')
     }
-    else if(count - 1 == item && name == 'Следующий' || count == inbox){
+    else if(count - 1 == item && name == '➡️'){
         return Markup.button.callback(name, `cart`, 'hide')
     }
 
-    if(name == 'Следующий'){
+    if(name == '➡️'){
         return Markup.button.callback(name, `nextCartItem`) 
     }
     else{
@@ -31,49 +30,28 @@ async function oneOrMore(count){
 export const pageCartKeyboardAndText = async (user) => {
     let keyboard
     let text
-
-    const newAr = user.cart.slice(0)
-    user.cart = []
-    for(let i of newAr){
-        const curItem = await Accum.findOne({_id: i.item})
-        if(curItem){
-            user.cart.push({
-                item: curItem._id,
-                price: curItem.price,
-                orig: curItem
-            })
-        }
-    }
-    // console.log(user.cart)
-    user.cart = user.cart.sort((a,b) => {return a.orig.model.length - b.orig.model.length})
-    // console.log(user.cart)
-
     if(user.cart.length !== 0){
-        
-        let cartInbox = ''
-        const inbox = user.cart.filter(item1 => item1.orig.model == user.cart[user.cartIndex].orig.model)
-        if(inbox.length == 1){
-            cartInbox = ``
-        }
-        else if(inbox.length > 1){
-            cartInbox = `(У вас в корзине ${inbox.length} таких товара)`
-        }     
-        
+        const itemThis = await Accum.findOne({_id: user.cart[user.cartIndex].origId})
+
         keyboard = Markup.inlineKeyboard([
-            [await funBut(user.cartIndex, user.cart.length, 'Назад', inbox.length), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, 'Следующий', inbox.length)],
-            [Markup.button.callback(await oneOrMore(inbox.length), `deleteFromCart|${user.cart[user.cartIndex].orig._id}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].orig._id}|${user.cart[user.cartIndex].orig.price}` )],//`deleteFromCart|${user.cart[user.cartIndex]._id}`
+            [await funBut(user.cartIndex, user.cart.length, '⬅️'), Markup.button.callback(fix.order, `order|${user.cart[user.cartIndex]._id}|${user.cart[user.cartIndex].price}`), await funBut(user.cartIndex, user.cart.length, '➡️')],
+            [Markup.button.callback(await oneOrMore(user.cart[user.cartIndex].inch), `deleteFromCart|${user.cart[user.cartIndex].origId}`), Markup.button.callback('Добавить', `inCartinCart|${user.cart[user.cartIndex].origId}`)],
             [Markup.button.callback('Оформить всю корзину', 'orderCartAll')],
             [Markup.button.callback('Удалить всю корзину', 'deleteCartAll')],
             [Markup.button.callback(fix.menu, `menu`)]
         ])
 
         const summa = async () => {
-        return await user.cart.map(item => item.price).reduce(function(a, b){return a + b}, 0)
+            return await user.cart.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
+        }
+
+        const summaTovar = async () => {
+            return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
         }
 
            
 
-        text = `В корзине ${user.cart.length} товаров \nCумма ${await summa()} бел.руб.\n\n# ${user.cartIndex + 1}\n` +  await perenos(user.cart[user.cartIndex].orig.model) + '\n' + user.cart[user.cartIndex].orig.price  + '\n' +  cartInbox
+        text = `В корзине ${await summaTovar()} товаров \nCумма ${await summa()} бел.руб.\n\n# ${user.cartIndex + 1} x ${user.cart[user.cartIndex].inch} шт\n\n` +  await perenos(itemThis.model) + '\n' + itemThis.price
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.menu, `menu`)])

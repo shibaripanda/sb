@@ -1,17 +1,18 @@
 import { fix } from "../fixConst.js"
 import { Markup } from "telegraf"
 import { perenos } from "./perenos.js"
+import { Accum } from "../models/Accum.js"
 
 const funBut = async (item, count, name) => {
 
-    if(item == 0 && name == 'Назад'){
+    if(item == 0 && name == '⬅️'){
         return Markup.button.callback(name, `cart`, 'hide')
     }
-    else if(count - 1 == item && name == 'Следующий'){
+    else if(count - 1 == item && name == '➡️'){
         return Markup.button.callback(name, `cart`, 'hide')
     }
 
-    if(name == 'Следующий'){
+    if(name == '➡️'){
         return Markup.button.callback(name, `nextSearchResult`) 
     }
     else{
@@ -31,20 +32,28 @@ export const pageSearchResultKeyboardAndText = async (user) => {
     let keyboard
     let text
     if(user.bufferSearch.item.length !== 0){
-        const item = user.bufferSearch.item[user.bufferSearch.step]
-        const item2 = user.bufferSearch
-            keyboard = Markup.inlineKeyboard([
-                [await funBut(item2.step, item2.len, 'Назад'), Markup.button.callback(fix.inCart,  `inCart|${item._id}|${item.price}`), await funBut(item2.step, item2.len, 'Следующий')],
-                [await cartBut(user.cart.length, user.cart.length), Markup.button.callback(fix.menu, `menu`)]
-            ])
-        let cartInbox = ''
-        const inbox = user.cart.filter(item1 => item1.item == item._id)
-        if(inbox.length == 1){
-            cartInbox = `(Уже в корзине)`
+        const item = await Accum.findOne({_id: user.bufferSearch.item[user.bufferSearch.step]})
+
+        const summaTovar = async () => {
+            return await user.cart.map(item1 => item1.inch).reduce(function(a, b){return a + b}, 0)
         }
-        else if(inbox.length > 1){
-            cartInbox = `(Уже в корзине ${inbox.length} шт)`
-        }     
+
+        keyboard = Markup.inlineKeyboard([
+            [await funBut(user.bufferSearch.step, user.bufferSearch.len, '⬅️'), Markup.button.callback(fix.inCart,  `inCart|${String(item._id)}|${item.price}`), await funBut(user.bufferSearch.step, user.bufferSearch.len, '➡️')],
+            [await cartBut(user.cart.length, await summaTovar()), Markup.button.callback(fix.menu, `menu`)]
+        ])
+
+        let cartInbox = ''
+        const inbox = user.cart.find(item1 => item1.origId == String(item._id))
+        if(inbox){
+            if(inbox.inch == 1){
+                cartInbox = `(Уже в корзине)`
+            }
+            else{
+                cartInbox = `(Уже в корзине ${inbox.inch} шт)`
+            }       
+        }
+        
         text = await perenos(item.model) + '\n' + item.price + '\n' + cartInbox
     }
     else{

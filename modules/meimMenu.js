@@ -1,8 +1,12 @@
 import { Markup } from "telegraf"
 import { fix } from "../fixConst.js"
 
-export const meinMenuDisplay = (user) => {
+
+
+
+export const meinMenuDisplay = async (user) => {
     try{
+
         const keyboardArray = []
 
         for(let i of fix.mainMenuButtons){
@@ -10,7 +14,16 @@ export const meinMenuDisplay = (user) => {
         }
     
         if(user.cart.length > 0){
-            keyboardArray.push([Markup.button.callback(fix.сart + ` (${user.cart.length})`, `cart`)])     
+
+            const summa = async () => {
+               return await user.cart.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
+            }
+
+            const summaTovar = async () => {
+                return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
+            }
+
+            keyboardArray.push([Markup.button.callback(fix.сart + ` (${await summaTovar()} шт, ${await summa()} руб)`, `cart`)])     
         }
 
         return Markup.inlineKeyboard(keyboardArray)
