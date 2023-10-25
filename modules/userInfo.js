@@ -63,13 +63,15 @@ export const userInfo = async (user) => {
 
     const readyOrder = async (step) => {
         if(step == 6){
-            return Markup.button.callback(`Заказать!`, `Продолжить`)
+            return Markup.button.callback(`Заказать!`, `orderDone`)
         }
         return Markup.button.callback(`Заказать!`, `Продолжить`, 'hide')
     }
 
     let orderDetails
     if(user.orderHot.split('|')[1] == 'cart'){
+
+        
         const summa = async () => {
             return await user.cart.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
         }
