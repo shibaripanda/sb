@@ -52,16 +52,16 @@ export const userInfo = async (user) => {
     let text
 
     keyboard = Markup.inlineKeyboard([
-        [Markup.button.callback('Имя', `menu`)],
-        [Markup.button.callback('Фамилия', `menu`)],
-        [Markup.button.callback('Отчество', `menu`)],
-        [Markup.button.callback('Телефон', `menu`)],
-        [Markup.button.callback('email', `menu`)],
-        [Markup.button.callback('Европочта №', `menu`)],
-        [Markup.button.callback(fix.menu, `menu`)]
+        // [],
+        [Markup.button.callback('Ф', `menu`), Markup.button.callback('И', `menu`), Markup.button.callback('О', `menu`)],
+        // [],
+        [Markup.button.callback('Телефон', `menu`), Markup.button.callback('email', `menu`)],
+        // [],
+        [Markup.button.callback('Европочта № отделения', `menu`)],
+        [Markup.button.callback(fix.menu, `menu`),Markup.button.callback(`Продолжить`, `Продолжить`)]
     ])
         
-    text = `Информация для отправки заказа\n\n${user.name}\n${user.surname}\n${user.lastname}\n${user.tel}\n${user.email}\n${user.evropochta}`
+    text = `Информация для отправки заказа\n\n${user.surname}\n${user.name}\n${user.lastname}\n${user.tel}\n${user.email}\n${user.evropochta}`
     
 
     return {'keyboard': keyboard, 'text': text}
