@@ -80,6 +80,10 @@ bot.on('message', async (ctx) => {
             user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
             result = await pageSearchResultKeyboardAndText(user)
         }
+        else if(user.currentStatus == 'surname' || 'name' || 'lastname' || 'tel' || 'email' || 'evropochta' && ctx.message['text']){
+            user[user.currentStatus].push(String(ctx.message.text))
+            result = await userInfo(user, ctx)
+        }
 
         await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', result.text, {...result.keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
         await user.save()
@@ -185,7 +189,14 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
+        else if(value == 'userData'){
+            const result = await userInfo(user, ctx)
+            keyboard = result.keyboard
+            text = result.text
+        }
         else if(value.split('|')[0] == 'order'){
+            user.orderHot = value
+            console.log(user.orderHot)
             if(user.clientStatus == false){
 
             }
@@ -223,6 +234,14 @@ bot.on('callback_query', async (ctx) => {
             const result = await pageSearchResultKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
+        }
+        else if(value == 'surname' || 'name' || 'lastname' || 'tel' || 'email' || 'evropochta'){
+            console.log(user[value])
+            keyboard = Markup.inlineKeyboard([
+                Markup.button.callback(fix.textBack, `userData`)
+            ])
+            text = 'Текущее значение: ' + user[value][user[value].length - 1] + '\n\n' + fix.askTextInfo[value]
+            user.currentStatus = value
         }
 
         await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)

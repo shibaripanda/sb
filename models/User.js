@@ -49,28 +49,28 @@ const schema = new Schema({
         required: true,
     },
     name: {
-        type: String,
-        default: 'Имя',
+        type: Array,
+        default: ['Имя'],
         required: true,
     },
     surname: {
-        type: String,
-        default: 'Фамилия',
+        type: Array,
+        default: ['Фамилия'],
         required: true,
     },
     lastname: {
-        type: String,
-        default: 'Отчество',
+        type: Array,
+        default: ['Отчество'],
         required: true,
     },
     tel: {
-        type: Number,
-        default: 375,
+        type: Array,
+        default: ['+375XXXXXXXXX'],
         required: true,
     },
     email: {
-        type: String,
-        default: 'email',
+        type: Array,
+        default: ['email'],
         required: true,
     },
     clientStatus: {
@@ -79,8 +79,13 @@ const schema = new Schema({
         required: true,
     },
     evropochta: {
-        type: Number,
-        default: 0,
+        type: Array,
+        default: ['0'],
+        required: true,
+    },
+    orderHot: {
+        type: String,
+        default: 'empty',
         required: true,
     }
     }, {timestamps: true})

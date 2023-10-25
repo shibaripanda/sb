@@ -51,17 +51,61 @@ export const userInfo = async (user) => {
     let keyboard
     let text
 
+    let step = 0
+
+    const flag = async (index) => {
+        if(user[index].length == 1){
+            return '❗️'
+        }
+        step++
+        return '✅'
+    }
+
+    const readyOrder = async (step) => {
+        if(step == 6){
+            return Markup.button.callback(`Заказать!`, `Продолжить`)
+        }
+        return Markup.button.callback(`Заказать!`, `Продолжить`, 'hide')
+    }
+
+    let orderDetails
+    if(user.orderHot.split('|')[1] == 'cart'){
+        const summa = async () => {
+            return await user.cart.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
+        }
+
+        const summaTovar = async () => {
+            return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
+        }
+
+        orderDetails = `${await summaTovar()} шт на общую сумму ${await summa()} руб.`
+    }
+    else{
+        const device = await Accum.findOne({_id: user.orderHot.split('|')[1]})
+        const sum = device.price * Number(user.orderHot.split('|')[2])
+
+        orderDetails = `${await perenos(device.model)}\n<b>Количество:</b> ${user.orderHot.split('|')[2]} шт.\n<b>Сумма:</b> ${sum} руб.`
+    }
+
+    const warning = async (step) => {
+        if(step == 6){
+            return 'Перед заказом <b>ВНИМАТЕЛЬНО</b> проверьте информацию выше!'
+        }
+        return 'Укажите всю необходимую информацию для заказа!'
+    }
+    
+    text = `<b>Информация для отправки заказа</b>\n\n${await flag('surname')} ${user.surname[user.surname.length - 1]}\n${await flag('name')} ${user.name[user.name.length - 1]}\n${await flag('lastname')} ${user.lastname[user.lastname.length - 1]}\n\n${await flag('tel')} ${user.tel[user.tel.length - 1]}\n${await flag('email')} ${user.email[user.email.length - 1]}\n\n${await flag('evropochta')} № отделения Европочты: ${user.evropochta[user.evropochta.length - 1]}\n\n<b>Ваш заказ:</b>\n${orderDetails}\n\n${await warning(step)}`
+    
+    console.log(step)
+
     keyboard = Markup.inlineKeyboard([
-        // [],
-        [Markup.button.callback('Ф', `menu`), Markup.button.callback('И', `menu`), Markup.button.callback('О', `menu`)],
-        // [],
-        [Markup.button.callback('Телефон', `menu`), Markup.button.callback('email', `menu`)],
-        // [],
-        [Markup.button.callback('Европочта № отделения', `menu`)],
-        [Markup.button.callback(fix.menu, `menu`),Markup.button.callback(`Продолжить`, `Продолжить`)]
+        [Markup.button.callback('Ф', `surname`), Markup.button.callback('И', `name`), Markup.button.callback('О', `lastname`)],
+        [Markup.button.callback('Телефон', `tel`), Markup.button.callback('email', `email`)],
+        [Markup.button.callback('Европочта № отделения', `evropochta`)],
+        [Markup.button.callback(fix.textBack, `cart`), await readyOrder(step)]
     ])
         
-    text = `Информация для отправки заказа\n\n${user.surname}\n${user.name}\n${user.lastname}\n${user.tel}\n${user.email}\n${user.evropochta}`
+    
     
 
     return {'keyboard': keyboard, 'text': text}

@@ -30,10 +30,10 @@ async function oneOrMore(count){
 const funButOrderCart = async (count) => {
 
     if(count == 1){
-        return Markup.button.callback('Оформить всю корзину', 'orderCartAll', 'hide')
+        return Markup.button.callback('Оформить всю корзину', 'order|cart', 'hide')
     }
     else{
-        return Markup.button.callback('Оформить всю корзину', 'orderCartAll')
+        return Markup.button.callback('Оформить всю корзину', 'order|cart')
     }
 }
 
@@ -71,7 +71,10 @@ export const pageCartKeyboardAndText = async (user) => {
 
            
 
-        text = `В корзине ${await summaTovar()} товаров \nCумма ${await summa()} бел.руб.\n\n# ${user.cartIndex + 1} x ${user.cart[user.cartIndex].inch} шт\n\n` +  await perenos(itemThis.model) + '\n' + itemThis.price
+        text = `<b>Корзина</b>\n\nУ вас в корзине ${await summaTovar()} товаров\nCумма ${await summa()} бел.руб.\n\n<b>Товар # ${user.cartIndex + 1}</b> x ${user.cart[user.cartIndex].inch} шт\n`
+        +  await perenos(itemThis.model)
+        + '\n' + '<b>Цена за шт:</b> ' + itemThis.price + ' руб.'
+        + '\n' + `<b>Цена за лот:</b> ` + itemThis.price * user.cart[user.cartIndex].inch + ' руб.'
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.menu, `menu`)])

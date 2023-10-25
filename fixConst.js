@@ -6,7 +6,7 @@ export const fix = {
     inCart: 'В корзину',
     сart: 'Корзина',
     emptyCart: 'Корзина пуста',
-    order: 'Оформить',
+    order: 'Оформить лот',
     menu: 'Меню',
     textCallInfo: 'Я помогу подобрать батарею к телефону!',
     textHistoryRequest: `История моих запросов`,
@@ -34,6 +34,15 @@ export const fix = {
         // {name:'Nokia', text: 'nokia'},
         // {name:'Vivo', text: 'vivo'},
         // {name:'ZTE', text: 'zte'}
-    ]
+    ],
+    askTextInfo:{
+        surname:'Введите вашу фамилию',
+        name:'Введите ваше имя',
+        lastname:'Введите ваше отчество',
+        tel:'Введите ваш номер телефона',
+        email:'Введите ваш email',
+        evropochta:'Введите номер отделения вашей Европочты',
+    },
+    
 
 }
