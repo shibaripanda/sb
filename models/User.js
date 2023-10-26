@@ -87,6 +87,11 @@ const schema = new Schema({
         type: String,
         default: 'empty',
         required: true,
+    },
+    orders: {
+        type: Array,
+        default: [],
+        required: true,
     }
     }, {timestamps: true})
 

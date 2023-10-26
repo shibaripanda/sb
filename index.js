@@ -13,6 +13,7 @@ import { keyboardAccum } from './modules/menuAccum.js'
 import { pageCartKeyboardAndText } from './modules/menuCart.js'
 import { pageSearchResultKeyboardAndText } from './modules/pageSearchResult.js'
 import { userInfo } from './modules/userInfo.js'
+import { orderDone } from './modules/orderDone.js'
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -98,9 +99,13 @@ bot.on('callback_query', async (ctx) => {
         await ctx.answerCbQuery()
         let value = await ctx.update.callback_query.data
         const user = await userClient(ctx)
-        console.log(value)
-        let keyboard
-        let text
+        console.log('callback_query: ' + value)
+        console.log(user.orders)
+        let keyboard = Markup.inlineKeyboard([
+            Markup.button.callback(fix.textBack, `menu`)
+        ])
+        let text = 'Ошибка'
+        // user.orders = []
 
         if(value == 'accumOrder'){
             keyboard = await keyboardAccum(user, value)
@@ -194,13 +199,13 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
+        else if(value == 'orderDone'){
+            const result = await orderDone(user, ctx)
+            keyboard = result.keyboard
+            text = result.text
+        }
         else if(value.split('|')[0] == 'order'){
             user.orderHot = value
-            console.log(user.orderHot)
-            if(user.clientStatus == false){
-
-            }
-            
             const result = await userInfo(user, ctx)
             keyboard = result.keyboard
             text = result.text
@@ -235,8 +240,7 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
         }
-        else if(value == 'surname' || 'name' || 'lastname' || 'tel' || 'email' || 'evropochta'){
-            console.log(user[value])
+        else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(value)){
             keyboard = Markup.inlineKeyboard([
                 Markup.button.callback(fix.textBack, `userData`)
             ])

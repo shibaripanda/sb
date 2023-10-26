@@ -2,6 +2,7 @@ import { Markup } from "telegraf"
 import { fix } from "../fixConst.js"
 import { Accum } from "../models/Accum.js"
 import { perenos } from "./perenos.js"
+import { updateCart } from "./updateCart.js"
 
 const funBut = async (item, count, name) => {
 
@@ -50,6 +51,7 @@ const funButCleanCart = async (count) => {
 export const pageCartKeyboardAndText = async (user) => {
     let keyboard
     let text
+    await updateCart(user)
     if(user.cart.length !== 0){
         const itemThis = await Accum.findOne({_id: user.cart[user.cartIndex].origId})
 
@@ -68,8 +70,6 @@ export const pageCartKeyboardAndText = async (user) => {
         const summaTovar = async () => {
             return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
         }
-
-           
 
         text = `<b>Корзина</b>\n\nУ вас в корзине ${await summaTovar()} товаров\nCумма ${await summa()} бел.руб.\n\n<b>Товар # ${user.cartIndex + 1}</b> x ${user.cart[user.cartIndex].inch} шт\n`
         +  await perenos(itemThis.model)
