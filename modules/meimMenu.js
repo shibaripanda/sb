@@ -24,15 +24,18 @@ export const meinMenuDisplay = async (user) => {
 
         if(user.orders.length > 0){
 
+            console.log(user.orders)
+
+
             const summa = async () => {
-               return await user.orders.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
+                return await user.orders.reduce(async function(a, b){
+                    return await a + b.reduce(function(x, y){
+                        return x + (y.price * y.inch)
+                    }, 0)
+                }, 0)
             }
 
-            const summaTovar = async () => {
-                return await user.orders.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
-            }
-
-            keyboardArray.push([Markup.button.callback('Заказы' + ` (${await summaTovar()} шт, ${await summa()} руб)`, `myOrders`)])     
+            keyboardArray.push([Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${await summa()} руб)`, `myOrders`)])     
         }
 
         return Markup.inlineKeyboard(keyboardArray)

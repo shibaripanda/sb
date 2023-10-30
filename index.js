@@ -72,22 +72,33 @@ bot.start(async (ctx) => {
 
 bot.on('message', async (ctx) => {
     try{
-        await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
         const user = await userClient(ctx)
-        let result
-        if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-            const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))
-            user.bufferSearch = {item: array.map(item => String(item._id)), step: 0, len: array.length}
-            user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
-            result = await pageSearchResultKeyboardAndText(user)
+        await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
+        if(user.currentStatus !== 'zero'){  
+            console.log(user.currentStatus)
+            let result = {
+                keyboard: Markup.inlineKeyboard([
+                    Markup.button.callback(fix.textBack, `menu`)
+                ]),
+                text: 'Нажми "Назад" и выбери пункт меню, в данный момент ввод текста не требуется'
         }
-        else if(user.currentStatus == 'surname' || 'name' || 'lastname' || 'tel' || 'email' || 'evropochta' && ctx.message['text']){
-            user[user.currentStatus].push(String(ctx.message.text))
-            result = await userInfo(user, ctx)
-        }
+            if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
+                const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))
+                user.bufferSearch = {item: array.map(item => String(item._id)), step: 0, len: array.length}
+                user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
+                result = await pageSearchResultKeyboardAndText(user)
+            }
+            else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(user.currentStatus) && ctx.message['text']){
+                user[user.currentStatus].push(String(ctx.message.text))
+                result = await userInfo(user, ctx)
+            }
 
-        await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', result.text, {...result.keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
-        await user.save()
+            await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', result.text, {...result.keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+            await user.save()
+        }
+        else{
+            console.log('zero')
+        }
     }
     catch(e){
         console.log('Message\n', e)
@@ -100,7 +111,7 @@ bot.on('callback_query', async (ctx) => {
         let value = await ctx.update.callback_query.data
         const user = await userClient(ctx)
         console.log('callback_query: ' + value)
-        console.log(user.orders)
+        // console.log(user.orders)
         let keyboard = Markup.inlineKeyboard([
             Markup.button.callback(fix.textBack, `menu`)
         ])
@@ -127,6 +138,7 @@ bot.on('callback_query', async (ctx) => {
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value.split('|')[0] == 'inCart'){
 
@@ -153,6 +165,7 @@ bot.on('callback_query', async (ctx) => {
             const result = await pageSearchResultKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value.split('|')[0] == 'inCartinCart'){
 
@@ -179,6 +192,7 @@ bot.on('callback_query', async (ctx) => {
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
             user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
@@ -193,22 +207,26 @@ bot.on('callback_query', async (ctx) => {
             const result = await pageCartKeyboardAndText(user, ctx)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value == 'userData'){
             const result = await userInfo(user, ctx)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value == 'orderDone'){
             const result = await orderDone(user, ctx)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value.split('|')[0] == 'order'){
             user.orderHot = value
             const result = await userInfo(user, ctx)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
         else if(value == 'deleteCartAll'){
             user.cart = []
@@ -216,29 +234,29 @@ bot.on('callback_query', async (ctx) => {
             text = fix.textHello + '\n' + fix.textCallInfo
             user.currentStatus = 'Menu'
         }
-        else if(value == 'nextCartItem'){
-            user.cartIndex++
+        else if(value == 'nextCartItem' || value == 'prevCartItem'){
+            if(value == 'nextCartItem'){
+                user.cartIndex++
+            }
+            else{
+                user.cartIndex--
+            }
             const result = await pageCartKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
+            user.currentStatus = 'zero'
         }
-        else if(value == 'prevCartItem'){
-            user.cartIndex--
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-        }
-        else if(value == 'nextSearchResult'){
-            user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step + 1, len: user.bufferSearch.len}
+        else if(value == 'nextSearchResult' || value == 'prevSearchResult'){
+            if(value == 'nextSearchResult'){
+               user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step + 1, len: user.bufferSearch.len} 
+            }
+            else{
+               user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step - 1, len: user.bufferSearch.len} 
+            }
             const result = await pageSearchResultKeyboardAndText(user)
             keyboard = result.keyboard
             text = result.text
-        }
-        else if(value == 'prevSearchResult'){
-            user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step - 1, len: user.bufferSearch.len}
-            const result = await pageSearchResultKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
+            user.currentStatus = 'zero'
         }
         else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(value)){
             keyboard = Markup.inlineKeyboard([

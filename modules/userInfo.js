@@ -1,5 +1,4 @@
 import { Markup } from "telegraf"
-import { fix } from "../fixConst.js"
 import { Accum } from "../models/Accum.js"
 import { perenos } from "./perenos.js"
 
