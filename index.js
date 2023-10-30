@@ -14,6 +14,7 @@ import { pageCartKeyboardAndText } from './modules/menuCart.js'
 import { pageSearchResultKeyboardAndText } from './modules/pageSearchResult.js'
 import { userInfo } from './modules/userInfo.js'
 import { orderDone } from './modules/orderDone.js'
+import { orderMenu } from './modules/menuOrder.js'
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -221,6 +222,13 @@ bot.on('callback_query', async (ctx) => {
             text = result.text
             user.currentStatus = 'zero'
         }
+        else if(value == 'myOrders'){
+            user.orderIndex = 0
+            const result = await orderMenu(user)
+            keyboard = result.keyboard
+            text = result.text
+            user.currentStatus = 'zero'
+        }
         else if(value.split('|')[0] == 'order'){
             user.orderHot = value
             const result = await userInfo(user, ctx)
@@ -242,6 +250,18 @@ bot.on('callback_query', async (ctx) => {
                 user.cartIndex--
             }
             const result = await pageCartKeyboardAndText(user)
+            keyboard = result.keyboard
+            text = result.text
+            user.currentStatus = 'zero'
+        }
+        else if(value == 'nextOrderItem' || value == 'prevOrderItem'){
+            if(value == 'nextOrderItem'){
+                user.orderIndex++
+            }
+            else{
+                user.orderIndex--
+            }
+            const result = await orderMenu(user)
             keyboard = result.keyboard
             text = result.text
             user.currentStatus = 'zero'

@@ -24,7 +24,7 @@ export const meinMenuDisplay = async (user) => {
 
         if(user.orders.length > 0){
 
-            console.log(user.orders)
+            // console.log(user.orders)
 
 
             const summa = async () => {

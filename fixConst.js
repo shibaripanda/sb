@@ -43,6 +43,13 @@ export const fix = {
         email:'Введите ваш email',
         evropochta:'Введите номер отделения вашей Европочты',
     },
+    statusOrder:{
+        status_1:'Создан',
+        status_2:'Принят менеджером в обработку',
+        status_3:'Отправлен',
+        status_4:'Ждет на почте',
+        status_5:'Получен'
+    },
     
 
 }

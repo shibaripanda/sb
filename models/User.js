@@ -92,6 +92,11 @@ const schema = new Schema({
         type: Array,
         default: [],
         required: true,
+    },
+    orderIndex: {
+        type: Number,
+        default: 0,
+        required: true,
     }
     }, {timestamps: true})
 
