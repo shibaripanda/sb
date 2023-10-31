@@ -1,6 +1,6 @@
 export const fix = {
     errorDone: function(error){if(error.response && error.response.statusCode === 400 || error.response && error.response.statusCode === 403){}},
-    textHello: 'Добрый день!',
+    textHello: 'Привет',
     textBack: 'Назад',
     border: '🚧🚧🚧🚧🚧🚧🚧🚧🚧',
     inCart: 'В корзину',

@@ -9,7 +9,8 @@ export const updateCart = async (user) => {
             user.cart.push({
                 origId: String(device._id),
                 price: device.price,
-                inch: i.inch
+                inch: i.inch,
+                time: i.time
             })
         }
     }

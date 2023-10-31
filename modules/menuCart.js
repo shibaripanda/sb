@@ -71,8 +71,11 @@ export const pageCartKeyboardAndText = async (user) => {
             return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
         }
 
+        // console.log(user.cart[user.cartIndex])
+
         text = `<b>Корзина</b>\n\nУ вас в корзине ${await summaTovar()} товаров\nCумма ${await summa()} бел.руб.\n\n<b>Товар # ${user.cartIndex + 1}</b> x ${user.cart[user.cartIndex].inch} шт\n`
         +  await perenos(itemThis.model)
+        + '\n' + '<b>Добавлен:</b> ' + user.cart[user.cartIndex].time.join(' / ')
         + '\n' + '<b>Цена за шт:</b> ' + itemThis.price + ' руб.'
         + '\n' + `<b>Цена за лот:</b> ` + itemThis.price * user.cart[user.cartIndex].inch + ' руб.'
     }

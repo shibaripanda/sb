@@ -2,6 +2,7 @@ import { Markup } from "telegraf"
 import { Accum } from "../models/Accum.js"
 import { User } from "../models/User.js"
 import { fix } from "../fixConst.js"
+import { dateAndTime } from "./dateTime.js"
 
 export const orderDone = async (user, ctx) => {
     let keyboard
@@ -56,6 +57,7 @@ export const orderDone = async (user, ctx) => {
     else{
         const numberOrder = Date.now()
         orderActiv.order = numberOrder
+        orderActiv[0].time = dateAndTime()
         orderActiv[0].order = numberOrder
         orderActiv[0].status = fix.statusOrder.status_1
         orderActiv[0].shipping = 'Данные для отправки:\n' +
@@ -73,11 +75,32 @@ export const orderDone = async (user, ctx) => {
         }
         await User.updateOne({id: ctx.from.id}, {cart: user.cart})
 
-        
+        const summa = async () => {
+            return await user.orders.reduce(async function(a, b){
+                return await a + b.reduce(function(x, y){
+                    return x + (y.price * y.inch)
+                }, 0)
+            }, 0)
+        }
+
+        const cart = async (user) => {
+            if(user.cart.length > 0){
+                const summa = async () => {
+                    return await user.cart.reduce(function(a, b){return a + (b.price * b.inch)}, 0)
+                }
+                const summaTovar = async () => {
+                     return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
+                }
+                return Markup.button.callback(fix.сart + ` (${await summaTovar()} шт, ${await summa()} руб)`, `cart`)
+            }
+            return Markup.button.callback(`but`, `cart`, 'hide')
+        }
 
         text = 'Заказ создан!'
         keyboard = Markup.inlineKeyboard([
-            [Markup.button.callback('Отменить', `cancelOrder|${numberOrder}`)],
+            [Markup.button.callback('Отменить', `cancelOrder|${user.orders.length - 1}`)],
+            [Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${await summa()} руб)`, `myOrders`)],
+            [await cart(user)],
             [Markup.button.callback('Меню', `menu`)]
         ])
     }

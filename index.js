@@ -15,6 +15,7 @@ import { pageSearchResultKeyboardAndText } from './modules/pageSearchResult.js'
 import { userInfo } from './modules/userInfo.js'
 import { orderDone } from './modules/orderDone.js'
 import { orderMenu } from './modules/menuOrder.js'
+import { dateAndTime } from './modules/dateTime.js'
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -116,8 +117,10 @@ bot.on('callback_query', async (ctx) => {
         let keyboard = Markup.inlineKeyboard([
             Markup.button.callback(fix.textBack, `menu`)
         ])
+
         let text = 'Ошибка'
         // user.orders = []
+        // user.cart = []
 
         if(value == 'accumOrder'){
             keyboard = await keyboardAccum(user, value)
@@ -152,13 +155,16 @@ bot.on('callback_query', async (ctx) => {
                 
                 if(countItemsInCart){
                     user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
+                    // user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push()
                     await User.updateOne({id: ctx.from.id}, {cart: user.cart})
                 }
                 else{
                     user.cart.push({
                             origId: String(curItem._id),
                             price: curItem.price,
-                            inch: 1
+                            inch: 1,
+                            time: [dateAndTime()]
                         })
                 } 
             }
@@ -179,13 +185,15 @@ bot.on('callback_query', async (ctx) => {
                 
                 if(countItemsInCart){
                     user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
                     await User.updateOne({id: ctx.from.id}, {cart: user.cart})
                 }
                 else{
                     user.cart.push({
                             origId: String(curItem._id),
                             price: curItem.price,
-                            inch: 1
+                            inch: 1,
+                            time: [dateAndTime()]
                         })
                 }
             }
@@ -197,6 +205,7 @@ bot.on('callback_query', async (ctx) => {
         }
         else if(value.split('|')[0] == 'deleteFromCart'){
             user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
+            user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].time.splice(0, 1)
             
             if(user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch == 0){
                 user.cart.splice(user.cart.findIndex(item => item.origId == value.split('|')[1]), 1)
@@ -209,6 +218,19 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
             user.currentStatus = 'zero'
+        }
+        else if(value.split('|')[0] == 'cancelOrder'){
+            if(user.orders[Number(value.split('|')[1])][0].status == 'Создан'){
+                user.orders.splice(Number(value.split('|')[1]), 1)
+                text = fix.textHello + '\n' + fix.textCallInfo + '\n\nВы отменили заказ!'
+            }
+            else{
+                text = fix.textHello + '\n' + fix.textCallInfo + '\n\nНельзя отменить заказ!'
+            }
+            
+            user.orderIndex = 0
+            keyboard = await meinMenuDisplay(user)
+            user.currentStatus = 'Menu'
         }
         else if(value == 'userData'){
             const result = await userInfo(user, ctx)

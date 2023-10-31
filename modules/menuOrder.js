@@ -19,6 +19,13 @@ const funBut = async (item, count, name) => {
     }
 }
 
+const canCancel = async (status, index) => {
+    if(status == 'Создан'){
+        return Markup.button.callback('Отменить', `cancelOrder|${index}`)  
+    }
+    return Markup.button.callback('Отменить', `canselOrder`, 'hide')
+}
+
 export const orderMenu = async (user) => {
     let keyboard
     let text
@@ -28,6 +35,7 @@ export const orderMenu = async (user) => {
     if(user.orders.length !== 0){
         
         keyboard = Markup.inlineKeyboard([
+            [await canCancel(user.orders[user.orderIndex][0].status, user.orderIndex), Markup.button.callback('Заказать звонок', `ring|${user.orderIndex}|${user.id}`)],
             [await funBut(user.orderIndex, order.length, '⬅️'), Markup.button.callback('Назад', `menu`), await funBut(user.orderIndex, order.length, '➡️')]
         ])
 
@@ -45,7 +53,7 @@ export const orderMenu = async (user) => {
             devises = devises + `\n\n▪️${await perenos(i.name)}\n▫️Количество: ${i.inch}\n▫️Стоимость: ${i.price} руб за шт\n▫️Итого: ${i.price * i.inch} руб`
         }
 
-        text = `${devises}\n\n<b>Всего товаров:</b> ${await summaTovar()} шт\n<b>Сумма заказа:</b> ${await summa()} руб\n<b>Статус заказа:</b> ${user.orders[user.orderIndex][0].status}`
+        text = `${devises}\n\n${user.orders[user.orderIndex][0].time}\n<b>Всего товаров:</b> ${await summaTovar()} шт\n<b>Сумма заказа:</b> ${await summa()} руб\n<b>Статус заказа:</b> ${user.orders[user.orderIndex][0].status}`
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.menu, `menu`)])
