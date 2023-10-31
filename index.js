@@ -4,6 +4,7 @@ import { db } from "./modules/db.js"
 import { User } from "./models/User.js"
 import { Device } from "./models/Device.js"
 import { Accum } from "./models/Accum.js"
+import { Data } from './models/Data.js'
 import { fix } from "./fixConst.js"
 import { userClient } from "./modules/userClient.js"
 import { upDateBaza } from "./modules/readExcel.js"
@@ -74,32 +75,34 @@ bot.start(async (ctx) => {
 
 bot.on('message', async (ctx) => {
     try{
-        const user = await userClient(ctx)
-        await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
-        if(user.currentStatus !== 'zero'){  
-            console.log(user.currentStatus)
-            let result = {
-                keyboard: Markup.inlineKeyboard([
-                    Markup.button.callback(fix.textBack, `menu`)
-                ]),
-                text: 'Нажми "Назад" и выбери пункт меню, в данный момент ввод текста не требуется'
-        }
-            if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
-                const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))
-                user.bufferSearch = {item: array.map(item => String(item._id)), step: 0, len: array.length}
-                user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
-                result = await pageSearchResultKeyboardAndText(user)
+        if(ctx.chat.id > 0){
+            const user = await userClient(ctx)
+            await bot.telegram.deleteMessage(ctx.chat.id, ctx.message.message_id).catch(fix.errorDone)
+            if(user.currentStatus !== 'zero'){  
+                console.log(user.currentStatus)
+                let result = {
+                    keyboard: Markup.inlineKeyboard([
+                        Markup.button.callback(fix.textBack, `menu`)
+                    ]),
+                    text: 'Нажми "Назад" и выбери пункт меню, в данный момент ввод текста не требуется'
             }
-            else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(user.currentStatus) && ctx.message['text']){
-                user[user.currentStatus].push(String(ctx.message.text))
-                result = await userInfo(user, ctx)
-            }
+                if(user.currentStatus.split('|')[0] == 'askAccumModel' && ctx.message['text']){
+                    const array = (await resultSearch('Accum', user.currentStatus.split('|')[1] + ' ' + ctx.message.text, 4))
+                    user.bufferSearch = {item: array.map(item => String(item._id)), step: 0, len: array.length}
+                    user.historyRequest.push(user.currentStatus.split('|')[1] + ' ' + ctx.message.text)
+                    result = await pageSearchResultKeyboardAndText(user)
+                }
+                else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(user.currentStatus) && ctx.message['text']){
+                    user[user.currentStatus].push(String(ctx.message.text))
+                    result = await userInfo(user, ctx)
+                }
 
-            await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', result.text, {...result.keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
-            await user.save()
-        }
-        else{
-            console.log('zero')
+                await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', result.text, {...result.keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+                await user.save()
+            }
+            else{
+                console.log('zero')
+            }
         }
     }
     catch(e){
@@ -220,6 +223,7 @@ bot.on('callback_query', async (ctx) => {
             user.currentStatus = 'zero'
         }
         else if(value.split('|')[0] == 'cancelOrder'){
+            await Data.updateOne({data: 'data'}, {$inc: {countOrders: -1}})
             if(user.orders[Number(value.split('|')[1])][0].status == 'Создан'){
                 user.orders.splice(Number(value.split('|')[1]), 1)
                 text = fix.textHello + '\n' + fix.textCallInfo + '\n\nВы отменили заказ!'
@@ -243,6 +247,8 @@ bot.on('callback_query', async (ctx) => {
             keyboard = result.keyboard
             text = result.text
             user.currentStatus = 'zero'
+            const mes = await bot.telegram.sendMessage(-1001639457688, result.order, {parse_mode: 'HTML'}).catch(fix.errorDone)
+            console.log(mes)
         }
         else if(value == 'myOrders'){
             user.orderIndex = 0

@@ -3,6 +3,8 @@ import { Accum } from "../models/Accum.js"
 import { User } from "../models/User.js"
 import { fix } from "../fixConst.js"
 import { dateAndTime } from "./dateTime.js"
+import { orderMenu } from "./menuOrder.js"
+import { Data } from "../models/Data.js"
 
 export const orderDone = async (user, ctx) => {
     let keyboard
@@ -55,8 +57,10 @@ export const orderDone = async (user, ctx) => {
         ])
     }
     else{
+        await Data.updateOne({data: 'data'}, {$inc: {numberOrder: 1}, $inc: {countOrders: 1}})
         const numberOrder = Date.now()
         orderActiv.order = numberOrder
+        orderActiv[0].globalNumber = (await Data.findOne({data: 'data'}, {numberOrder: 1})).numberOrder
         orderActiv[0].time = dateAndTime()
         orderActiv[0].order = numberOrder
         orderActiv[0].status = fix.statusOrder.status_1
@@ -104,6 +108,6 @@ export const orderDone = async (user, ctx) => {
             [Markup.button.callback('Меню', `menu`)]
         ])
     }
-
-    return {'keyboard': keyboard, 'text': text}
+    user.orderIndex = user.orders.length - 1
+    return {'keyboard': keyboard, 'text': text, order: (await orderMenu(user)).text}
 }
