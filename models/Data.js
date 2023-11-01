@@ -6,7 +6,7 @@ const schema = new Schema({
         default: 'data',
         required: true,
     },
-    numberOrder: {
+    globalNumber: {
         type: Number,
         default: 0,
         required: true,

@@ -28,6 +28,7 @@ async function start(){
         console.log('* Device: ' + await Device.find({}).countDocuments())
         console.log('* Accum: ' + await Accum.find({}).countDocuments())
         console.log('* User: ' + await User.find({}).countDocuments())
+        console.log('* Data: ' + await Data.findOne({data: 'data'}, {countUsers: 1, countOrders: 1, globalNumber: 1, _id: 0}))
         console.log('*\n')
     }
 
@@ -114,208 +115,234 @@ bot.on('callback_query', async (ctx) => {
     try{
         await ctx.answerCbQuery()
         let value = await ctx.update.callback_query.data
-        const user = await userClient(ctx)
-        console.log('callback_query: ' + value)
-        // console.log(user.orders)
-        let keyboard = Markup.inlineKeyboard([
-            Markup.button.callback(fix.textBack, `menu`)
-        ])
-
-        let text = 'Ошибка'
-        // user.orders = []
-        // user.cart = []
-
-        if(value == 'accumOrder'){
-            keyboard = await keyboardAccum(user, value)
-            text = fix.textCheckModel
-            user.currentStatus = 'viewAccumModelList'
-        }
-        else if(value.split('|')[1] == 'accumOrder' && fix.modelsDevicesTel.map(item => item.text).includes(value.split('|')[0])){
-            keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])
-            text = value.split('|')[0] + '\n' + fix.textModelTel
-            user.currentStatus = `askAccumModel|${value.split('|')[0]}`
-        }
-        else if(value == 'menu'){
-            keyboard = await meinMenuDisplay(user)
-            text = fix.textHello + '\n' + fix.textCallInfo
-            user.currentStatus = 'Menu'
-        }
-        else if(value == 'cart'){
-            user.cartIndex = 0
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value.split('|')[0] == 'inCart'){
-
-            const itemTest = value.split('|')[1]
-
-            const curItem = await Accum.findOne({_id: itemTest})
-
-            if(curItem){
-                const countItemsInCart = user.cart.find(item => item.origId == itemTest)
-                
-                if(countItemsInCart){
-                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
-                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
-                    // user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push()
-                    await User.updateOne({id: ctx.from.id}, {cart: user.cart})
-                }
-                else{
-                    user.cart.push({
-                            origId: String(curItem._id),
-                            price: curItem.price,
-                            inch: 1,
-                            time: [dateAndTime()]
-                        })
-                } 
-            }
-
-            const result = await pageSearchResultKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value.split('|')[0] == 'inCartinCart'){
-
-            const itemTest = value.split('|')[1]
-
-            const curItem = await Accum.findOne({_id: itemTest})
-
-            if(curItem){
-                const countItemsInCart = user.cart.find(item => item.origId == itemTest)
-                
-                if(countItemsInCart){
-                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
-                    user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
-                    await User.updateOne({id: ctx.from.id}, {cart: user.cart})
-                }
-                else{
-                    user.cart.push({
-                            origId: String(curItem._id),
-                            price: curItem.price,
-                            inch: 1,
-                            time: [dateAndTime()]
-                        })
-                }
-            }
-
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value.split('|')[0] == 'deleteFromCart'){
-            user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
-            user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].time.splice(0, 1)
-            
-            if(user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch == 0){
-                user.cart.splice(user.cart.findIndex(item => item.origId == value.split('|')[1]), 1)
-                if(user.cartIndex > 0){
-                  user.cartIndex--   
-                }
-            }
-            await User.updateOne({id: ctx.from.id}, {cart: user.cart})
-            const result = await pageCartKeyboardAndText(user, ctx)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value.split('|')[0] == 'cancelOrder'){
-            await Data.updateOne({data: 'data'}, {$inc: {countOrders: -1}})
-            if(user.orders[Number(value.split('|')[1])][0].status == 'Создан'){
-                user.orders.splice(Number(value.split('|')[1]), 1)
-                text = fix.textHello + '\n' + fix.textCallInfo + '\n\nВы отменили заказ!'
-            }
-            else{
-                text = fix.textHello + '\n' + fix.textCallInfo + '\n\nНельзя отменить заказ!'
-            }
-            
-            user.orderIndex = 0
-            keyboard = await meinMenuDisplay(user)
-            user.currentStatus = 'Menu'
-        }
-        else if(value == 'userData'){
-            const result = await userInfo(user, ctx)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value == 'orderDone'){
-            const result = await orderDone(user, ctx)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-            const mes = await bot.telegram.sendMessage(-1001639457688, result.order, {parse_mode: 'HTML'}).catch(fix.errorDone)
-            console.log(mes)
-        }
-        else if(value == 'myOrders'){
-            user.orderIndex = 0
-            const result = await orderMenu(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value.split('|')[0] == 'order'){
-            user.orderHot = value
-            const result = await userInfo(user, ctx)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value == 'deleteCartAll'){
-            user.cart = []
-            keyboard = await meinMenuDisplay(user)
-            text = fix.textHello + '\n' + fix.textCallInfo
-            user.currentStatus = 'Menu'
-        }
-        else if(value == 'nextCartItem' || value == 'prevCartItem'){
-            if(value == 'nextCartItem'){
-                user.cartIndex++
-            }
-            else{
-                user.cartIndex--
-            }
-            const result = await pageCartKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value == 'nextOrderItem' || value == 'prevOrderItem'){
-            if(value == 'nextOrderItem'){
-                user.orderIndex++
-            }
-            else{
-                user.orderIndex--
-            }
-            const result = await orderMenu(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(value == 'nextSearchResult' || value == 'prevSearchResult'){
-            if(value == 'nextSearchResult'){
-               user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step + 1, len: user.bufferSearch.len} 
-            }
-            else{
-               user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step - 1, len: user.bufferSearch.len} 
-            }
-            const result = await pageSearchResultKeyboardAndText(user)
-            keyboard = result.keyboard
-            text = result.text
-            user.currentStatus = 'zero'
-        }
-        else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(value)){
-            keyboard = Markup.inlineKeyboard([
-                Markup.button.callback(fix.textBack, `userData`)
+        if(ctx.update.callback_query.message.chat.id > 0){
+            console.log(ctx.update)
+            const user = await userClient(ctx)
+            console.log('callback_query: ' + value)
+            // console.log(user.orders)
+            let keyboard = Markup.inlineKeyboard([
+                Markup.button.callback(fix.textBack, `menu`)
             ])
-            text = 'Текущее значение: ' + user[value][user[value].length - 1] + '\n\n' + fix.askTextInfo[value]
-            user.currentStatus = value
-        }
 
-        await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
-        await user.save()
+            let text = 'Ошибка'
+
+            console.log('1:' + user.orders.length)
+            // user.orders = []
+            // user.cart = []
+            // await Data.updateOne({data: 'data'}, {countOrders: 1})
+
+            if(value == 'accumOrder'){
+                keyboard = await keyboardAccum(user, value)
+                text = fix.textCheckModel
+                user.currentStatus = 'viewAccumModelList'
+            }
+            else if(value.split('|')[1] == 'accumOrder' && fix.modelsDevicesTel.map(item => item.text).includes(value.split('|')[0])){
+                keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])
+                text = value.split('|')[0] + '\n' + fix.textModelTel
+                user.currentStatus = `askAccumModel|${value.split('|')[0]}`
+            }
+            else if(value == 'menu'){
+                keyboard = await meinMenuDisplay(user)
+                text = fix.textHello + '\n' + fix.textCallInfo
+                user.currentStatus = 'Menu'
+            }
+            else if(value == 'cart'){
+                user.cartIndex = 0
+                const result = await pageCartKeyboardAndText(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'inCart'){
+
+                const itemTest = value.split('|')[1]
+
+                const curItem = await Accum.findOne({_id: itemTest})
+
+                if(curItem){
+                    const countItemsInCart = user.cart.find(item => item.origId == itemTest)
+                    
+                    if(countItemsInCart){
+                        user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                        user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
+                        // user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push()
+                        await User.updateOne({id: ctx.from.id}, {cart: user.cart})
+                    }
+                    else{
+                        user.cart.push({
+                                origId: String(curItem._id),
+                                price: curItem.price,
+                                inch: 1,
+                                time: [dateAndTime()]
+                            })
+                    } 
+                }
+
+                const result = await pageSearchResultKeyboardAndText(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'inCartinCart'){
+
+                const itemTest = value.split('|')[1]
+
+                const curItem = await Accum.findOne({_id: itemTest})
+
+                if(curItem){
+                    const countItemsInCart = user.cart.find(item => item.origId == itemTest)
+                    
+                    if(countItemsInCart){
+                        user.cart[user.cart.findIndex(item => item.origId == itemTest)].inch++
+                        user.cart[user.cart.findIndex(item => item.origId == itemTest)].time.push(dateAndTime())
+                        await User.updateOne({id: ctx.from.id}, {cart: user.cart})
+                    }
+                    else{
+                        user.cart.push({
+                                origId: String(curItem._id),
+                                price: curItem.price,
+                                inch: 1,
+                                time: [dateAndTime()]
+                            })
+                    }
+                }
+
+                const result = await pageCartKeyboardAndText(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'deleteFromCart'){
+                user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch--
+                user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].time.splice(0, 1)
+                
+                if(user.cart[user.cart.findIndex(item => item.origId == value.split('|')[1])].inch == 0){
+                    user.cart.splice(user.cart.findIndex(item => item.origId == value.split('|')[1]), 1)
+                    if(user.cartIndex > 0){
+                    user.cartIndex--   
+                    }
+                }
+                await User.updateOne({id: ctx.from.id}, {cart: user.cart})
+                const result = await pageCartKeyboardAndText(user, ctx)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'cancelOrder'){
+                await Data.updateOne({data: 'data'}, {$inc: {countOrders: -1}})
+                if(user.orders[Number(value.split('|')[1])][0].status == 'Создан'){
+                    user.orders.splice(Number(value.split('|')[1]), 1)
+                    text = fix.textHello + '\n' + fix.textCallInfo + '\n\nВы отменили заказ!'
+                }
+                else{
+                    text = fix.textHello + '\n' + fix.textCallInfo + '\n\nНельзя отменить заказ!'
+                }
+                
+                user.orderIndex = 0
+                keyboard = await meinMenuDisplay(user)
+                user.currentStatus = 'Menu'
+            }
+            else if(value == 'userData'){
+                const result = await userInfo(user, ctx)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value == 'orderDone'){
+                const result = await orderDone(user)
+                keyboard = result.keyboard
+                text = result.text
+                const keyboardAdmin = Markup.inlineKeyboard([
+                    Markup.button.callback('Обработка', `proccesOrder|${result.user}|${result.globalNumber}`)
+                ])
+                user.currentStatus = 'zero'
+                const mes = await bot.telegram.sendMessage(-1001639457688, result.order + '\n\nГлобальный номер: ' + result.globalNumber, {...keyboardAdmin, parse_mode: 'HTML'}).catch(fix.errorDone)
+            }
+            else if(value == 'myOrders'){
+                user.orderIndex = 0
+                const result = await orderMenu(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'order'){
+                user.orderHot = value
+                const result = await userInfo(user, ctx)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value == 'deleteCartAll'){
+                user.cart = []
+                keyboard = await meinMenuDisplay(user)
+                text = fix.textHello + '\n' + fix.textCallInfo
+                user.currentStatus = 'Menu'
+            }
+            else if(value == 'nextCartItem' || value == 'prevCartItem'){
+                if(value == 'nextCartItem'){
+                    user.cartIndex++
+                }
+                else{
+                    user.cartIndex--
+                }
+                const result = await pageCartKeyboardAndText(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value == 'nextOrderItem' || value == 'prevOrderItem'){
+                if(value == 'nextOrderItem'){
+                    user.orderIndex++
+                }
+                else{
+                    user.orderIndex--
+                }
+                const result = await orderMenu(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value == 'nextSearchResult' || value == 'prevSearchResult'){
+                if(value == 'nextSearchResult'){
+                user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step + 1, len: user.bufferSearch.len} 
+                }
+                else{
+                user.bufferSearch = {item: user.bufferSearch.item, step: user.bufferSearch.step - 1, len: user.bufferSearch.len} 
+                }
+                const result = await pageSearchResultKeyboardAndText(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(['surname', 'name', 'lastname', 'tel', 'email', 'evropochta'].includes(value)){
+                keyboard = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.textBack, `userData`)
+                ])
+                text = 'Текущее значение: ' + user[value][user[value].length - 1] + '\n\n' + fix.askTextInfo[value]
+                user.currentStatus = value
+            }
+
+            await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
+            await user.save()
+            // console.log(user.orders[0] ? user.orders[0]: 'пусто')
+        }
+        else{
+            if(value.split('|')[0] == 'proccesOrder'){
+                // console.log(value)
+                console.log('procc')
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))][0].status = fix.statusOrder.status_2
+
+                console.log(ctx.update.callback_query.message.reply_markup)
+
+                const keyboardAdmin = Markup.inlineKeyboard([
+                    [Markup.button.callback('Обработка ✅', `zero`), Markup.button.callback('Отправлен', `sendOrder|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`)]
+                ])
+
+                await bot.telegram.editMessageReplyMarkup(ctx.update.callback_query.message.chat.id, ctx.update.callback_query.message.message_id, {inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+                await userClient.save()
+            }
+        }
     }
     catch(e){
         console.log('callback_query\n' + e)
