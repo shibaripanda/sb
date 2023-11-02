@@ -116,7 +116,7 @@ bot.on('callback_query', async (ctx) => {
         await ctx.answerCbQuery()
         let value = await ctx.update.callback_query.data
         if(ctx.update.callback_query.message.chat.id > 0){
-            console.log(ctx.update)
+            // console.log(ctx.update)
             const user = await userClient(ctx)
             console.log('callback_query: ' + value)
             // console.log(user.orders)
@@ -228,11 +228,15 @@ bot.on('callback_query', async (ctx) => {
                 text = result.text
                 user.currentStatus = 'zero'
             }
-            else if(value.split('|')[0] == 'cancelOrder'){
-                await Data.updateOne({data: 'data'}, {$inc: {countOrders: -1}})
+            else if(value.split('|')[0] == 'cancelOrder'){    
                 if(user.orders[Number(value.split('|')[1])][0].status == 'Создан'){
-                    user.orders.splice(Number(value.split('|')[1]), 1)
+                    await Data.updateOne({data: 'data'}, {$inc: {countOrders: -1}}) 
                     text = fix.textHello + '\n' + fix.textCallInfo + '\n\nВы отменили заказ!'
+                    const keyboardAdmin = [
+                        [{text: '❌❌❌❌❌', callback_data: `zero`}]
+                    ]
+                    await bot.telegram.editMessageReplyMarkup(process.env.TECH_CHAT, user.orders[Number(value.split('|')[1])][0].techMessage, 'q', {inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+                    user.orders.splice(Number(value.split('|')[1]), 1)
                 }
                 else{
                     text = fix.textHello + '\n' + fix.textCallInfo + '\n\nНельзя отменить заказ!'
@@ -256,10 +260,14 @@ bot.on('callback_query', async (ctx) => {
                     Markup.button.callback('Обработка', `proccesOrder|${result.user}|${result.globalNumber}`)
                 ])
                 user.currentStatus = 'zero'
-                const mes = await bot.telegram.sendMessage(-1001639457688, result.order + '\n\nГлобальный номер: ' + result.globalNumber, {...keyboardAdmin, parse_mode: 'HTML'}).catch(fix.errorDone)
+                const mes = await bot.telegram.sendMessage(process.env.TECH_CHAT, result.order + '\n\nГлобальный номер: ' + result.globalNumber, {...keyboardAdmin, parse_mode: 'HTML'}).catch(fix.errorDone)
+                const dataForUp = user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))]
+                dataForUp[0].techMessage = mes.message_id
+                user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))] = dataForUp
+                console.log(user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))][0].techMessage)
             }
-            else if(value == 'myOrders'){
-                user.orderIndex = 0
+            else if(value.split('|')[0] == 'myOrders'){
+                user.orderIndex = value.split('|')[1] ? user.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[1])) : 0
                 const result = await orderMenu(user)
                 keyboard = result.keyboard
                 text = result.text
@@ -328,18 +336,58 @@ bot.on('callback_query', async (ctx) => {
         }
         else{
             if(value.split('|')[0] == 'proccesOrder'){
-                // console.log(value)
                 console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
-                userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))][0].status = fix.statusOrder.status_2
+                const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
+                dataUp[0].status = fix.statusOrder.status_2
+                userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
+                const keyboardAdmin = [
+                    [{text: '✅Обработка', callback_data: `zero`}, {text: 'Отправлен', callback_data: `sendOrder|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
 
-                console.log(ctx.update.callback_query.message.reply_markup)
-
-                const keyboardAdmin = Markup.inlineKeyboard([
-                    [Markup.button.callback('Обработка ✅', `zero`), Markup.button.callback('Отправлен', `sendOrder|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`)]
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
                 ])
 
-                await bot.telegram.editMessageReplyMarkup(ctx.update.callback_query.message.chat.id, ctx.update.callback_query.message.message_id, {inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'sendOrder'){
+                console.log('procc')
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
+                dataUp[0].status = fix.statusOrder.status_3
+                userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
+                const keyboardAdmin = [
+                    [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: 'Прибыл', callback_data: `arrive|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'arrive'){
+                console.log('procc')
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
+                dataUp[0].status = fix.statusOrder.status_4
+                userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
+                const keyboardAdmin = [
+                    [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: '✅Прибыл', callback_data: `zero`}],
+                    [{text: 'Получен', callback_data: `recivedByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}, {text: 'Забили хуй', callback_data: `notRecivedByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
                 await userClient.save()
             }
         }
