@@ -339,7 +339,7 @@ bot.on('callback_query', async (ctx) => {
                 console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status = fix.statusOrder.status_2
+                dataUp[0].status.push(fix.statusOrder.status_2 + '/' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
                     [{text: '✅Обработка', callback_data: `zero`}, {text: 'Отправлен', callback_data: `sendOrder|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
@@ -357,7 +357,7 @@ bot.on('callback_query', async (ctx) => {
                 console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status = fix.statusOrder.status_3
+                dataUp[0].status.push(fix.statusOrder.status_3 + '/' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
                     [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: 'Прибыл', callback_data: `arrive|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
@@ -375,7 +375,7 @@ bot.on('callback_query', async (ctx) => {
                 console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status = fix.statusOrder.status_4
+                dataUp[0].status.push(fix.statusOrder.status_4 + '/' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
                     [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: '✅Прибыл', callback_data: `zero`}],
