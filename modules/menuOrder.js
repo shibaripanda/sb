@@ -36,7 +36,7 @@ export const orderMenu = async (user) => {
         
         keyboard = Markup.inlineKeyboard([
             [await canCancel(user.orders[user.orderIndex][0].status[user.orders[user.orderIndex][0].status.length - 1], user.orderIndex), Markup.button.callback('Заказать звонок', `ring|${user.orderIndex}|${user.id}`)],
-            [await funBut(user.orderIndex, order.length, '⬅️'), Markup.button.callback('Назад', `menu`), await funBut(user.orderIndex, order.length, '➡️')]
+            [await funBut(user.orderIndex, order.length, '⬅️'), Markup.button.callback(fix.menu, `menu`), await funBut(user.orderIndex, order.length, '➡️')]
         ])
 
         const summa = async () => {
@@ -47,15 +47,13 @@ export const orderMenu = async (user) => {
             return await user.orders[user.orderIndex].map(item => item.inch).reduce(function(a, b){return a + b}, 0)
         }
 
-        let devises = `<b>Заказ #${user.orderIndex + 1}</b>\n${user.orders[user.orderIndex][0].shipping}`
+        let devises = `<b>Заказ #${user.orders[user.orderIndex][0].globalNumber}</b>\n${user.orders[user.orderIndex][0].shipping}`
 
         for(let i of user.orders[user.orderIndex]){
             devises = devises + `\n\n▪️${await perenos(i.name)}\n▫️Количество: ${i.inch}\n▫️Стоимость: ${i.price} руб за шт\n▫️Итого: ${i.price * i.inch} руб`
         }
 
-        console.log(user.orders[user.orderIndex][0].status)
-
-        text = `${devises}\n\n${user.orders[user.orderIndex][0].time}\n<b>Всего товаров:</b> ${await summaTovar()} шт\n<b>Сумма заказа:</b> ${await summa()} руб\n<b>Статус заказа:</b>\n- ${user.orders[user.orderIndex][0].status.join('\n- ')}`
+        text = `${devises}\n\n${user.orders[user.orderIndex][0].time}\n<b>Всего товаров:</b> ${await summaTovar()} шт\n<b>Сумма заказа:</b> ${await summa()} руб\n\n<b>Статус заказа:</b>\n- ${user.orders[user.orderIndex][0].status.join('\n- ')}`
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.menu, `menu`)])

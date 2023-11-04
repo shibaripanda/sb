@@ -97,6 +97,11 @@ const schema = new Schema({
         type: Number,
         default: 0,
         required: true,
+    },
+    ordersArhiv: {
+        type: Array,
+        default: [],
+        required: true,
     }
     }, {timestamps: true})
 

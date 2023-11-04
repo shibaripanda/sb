@@ -17,6 +17,7 @@ import { userInfo } from './modules/userInfo.js'
 import { orderDone } from './modules/orderDone.js'
 import { orderMenu } from './modules/menuOrder.js'
 import { dateAndTime } from './modules/dateTime.js'
+import { arhivMenu } from './modules/menuArhiv.js'
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
 const option = {allowedUpdates: ['chat_member', 'callback_query', 'message', 'channel_post'], dropPendingUpdates: true}
@@ -126,9 +127,10 @@ bot.on('callback_query', async (ctx) => {
 
             let text = 'Ошибка'
 
-            console.log('1:' + user.orders.length)
+            // console.log('1:' + user.orders.length)
             // user.orders = []
             // user.cart = []
+            // user.ordersArhiv = []
             // await Data.updateOne({data: 'data'}, {countOrders: 1})
 
             if(value == 'accumOrder'){
@@ -257,7 +259,8 @@ bot.on('callback_query', async (ctx) => {
                 keyboard = result.keyboard
                 text = result.text
                 const keyboardAdmin = Markup.inlineKeyboard([
-                    Markup.button.callback('Обработка', `proccesOrder|${result.user}|${result.globalNumber}`)
+                    [Markup.button.callback('Отменен поставщиком', `cancelByShop|${result.user}|${result.globalNumber}`), Markup.button.callback('Отменен заказчиком', `cancelByClient|${result.user}|${result.globalNumber}`)],
+                    [Markup.button.callback('Обработка', `proccesOrder|${result.user}|${result.globalNumber}`)]
                 ])
                 user.currentStatus = 'zero'
                 const mes = await bot.telegram.sendMessage(process.env.TECH_CHAT, result.order + '\n\nГлобальный номер: ' + result.globalNumber, {...keyboardAdmin, parse_mode: 'HTML'}).catch(fix.errorDone)
@@ -266,9 +269,44 @@ bot.on('callback_query', async (ctx) => {
                 user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))] = dataForUp
                 console.log(user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))][0].techMessage)
             }
+            else if(value.split('|')[0] == 'varanti'){
+                keyboard = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.textBack, `menu`)
+                ])
+                text = 'Мы скоро свяжемся с вами!'
+
+                const keyboardAdmin = Markup.inlineKeyboard([
+                    [Markup.button.callback('Отменен поставщиком', `cancelByShop|${result.user}|${result.globalNumber}`), Markup.button.callback('Отменен заказчиком', `cancelByClient|${result.user}|${result.globalNumber}`)],
+                    [Markup.button.callback('Обработка', `proccesOrder|${result.user}|${result.globalNumber}`)]
+                ])
+                user.currentStatus = 'zero'
+                const mes = await bot.telegram.sendMessage(process.env.TECH_CHAT, result.order + '\n\nГлобальный номер: ' + result.globalNumber, {...keyboardAdmin, parse_mode: 'HTML'}).catch(fix.errorDone)
+                const dataForUp = user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))]
+                dataForUp[0].techMessage = mes.message_id
+                user.orders[user.orders.findIndex(item => item[0].globalNumber == Number(result.globalNumber))] = dataForUp
+            }
             else if(value.split('|')[0] == 'myOrders'){
                 user.orderIndex = value.split('|')[1] ? user.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[1])) : 0
                 const result = await orderMenu(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value.split('|')[0] == 'myArhiv'){
+                user.orderIndex = value.split('|')[1] ? user.ordersArhiv.findIndex(item => item[0].globalNumber == Number(value.split('|')[1])) : 0
+                const result = await arhivMenu(user)
+                keyboard = result.keyboard
+                text = result.text
+                user.currentStatus = 'zero'
+            }
+            else if(value == 'nextArhivItem' || value == 'prevArhivItem'){
+                if(value == 'nextArhivItem'){
+                    user.orderIndex++
+                }
+                else{
+                    user.orderIndex--
+                }
+                const result = await arhivMenu(user)
                 keyboard = result.keyboard
                 text = result.text
                 user.currentStatus = 'zero'
@@ -332,62 +370,147 @@ bot.on('callback_query', async (ctx) => {
 
             await bot.telegram.editMessageText(ctx.from.id, user.lastMes, 'q', text, {...keyboard, parse_mode: 'HTML'}).catch(fix.errorDone)
             await user.save()
-            // console.log(user.orders[0] ? user.orders[0]: 'пусто')
         }
         else{
             if(value.split('|')[0] == 'proccesOrder'){
-                console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status.push(fix.statusOrder.status_2 + '/' + dateAndTime())
+                dataUp[0].status.push(fix.statusOrder.status_2 + ' / ' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
+                    [Markup.button.callback('Отменен поставщиком', `cancelByShop|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`), Markup.button.callback('Отменен заказчиком', `cancelByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`)],
                     [{text: '✅Обработка', callback_data: `zero`}, {text: 'Отправлен', callback_data: `sendOrder|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
                 ]
                 await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
 
                 const keyboard_1 = Markup.inlineKeyboard([
-                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
+                    Markup.button.callback(fix.look, `myOrders|${Number(value.split('|')[2])}`)
                 ])
 
-                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_2}" ✅`, {...keyboard_1}).catch(fix.errorDone)
                 await userClient.save()
             }
             else if(value.split('|')[0] == 'sendOrder'){
-                console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status.push(fix.statusOrder.status_3 + '/' + dateAndTime())
+                dataUp[0].status.push(fix.statusOrder.status_3 + ' / ' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
+                    [Markup.button.callback('Отменен поставщиком', `cancelByShop|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`), Markup.button.callback('Отменен заказчиком', `cancelByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`)],
                     [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: 'Прибыл', callback_data: `arrive|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
                 ]
                 await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
 
                 const keyboard_1 = Markup.inlineKeyboard([
-                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
+                    Markup.button.callback(fix.look, `myOrders|${Number(value.split('|')[2])}`)
                 ])
 
-                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_3}" ✅`, {...keyboard_1}).catch(fix.errorDone)
                 await userClient.save()
             }
             else if(value.split('|')[0] == 'arrive'){
-                console.log('procc')
                 const userClient = await User.findOne({id: Number(value.split('|')[1])})
                 const dataUp = userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))]
-                dataUp[0].status.push(fix.statusOrder.status_4 + '/' + dateAndTime())
+                dataUp[0].status.push(fix.statusOrder.status_4 + ' / ' + dateAndTime())
                 userClient.orders[userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))] = dataUp
                 const keyboardAdmin = [
+                    [Markup.button.callback('Отменен поставщиком', `cancelByShop|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`), Markup.button.callback('Отменен заказчиком', `cancelByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`)],
                     [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: '✅Прибыл', callback_data: `zero`}],
                     [{text: 'Получен', callback_data: `recivedByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}, {text: 'Забили хуй', callback_data: `notRecivedByClient|${Number(value.split('|')[1])}|${Number(value.split('|')[2])}`}]
                 ]
                 await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
 
                 const keyboard_1 = Markup.inlineKeyboard([
-                    Markup.button.callback('Заказы', `myOrders|${Number(value.split('|')[2])}`)
+                    Markup.button.callback(fix.look, `myOrders|${Number(value.split('|')[2])}`)
                 ])
 
-                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), 'Статус заказа изменился ✅', {...keyboard_1}).catch(fix.errorDone)
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_4}" ✅`, {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'recivedByClient'){
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const index = userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))
+                const dataUp = userClient.orders[index]
+                dataUp[0].status.push(fix.statusOrder.status_5 + ' / ' + dateAndTime())
+                userClient.ordersArhiv.push(dataUp)
+                userClient.orders.splice(index, 1)
+
+
+                const keyboardAdmin = [
+                    [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: '✅Прибыл', callback_data: `zero`}],
+                    [{text: '✅Получен', callback_data: `zero`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.look, `myArhiv|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_5}"`, {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'notRecivedByClient'){
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const index = userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))
+                const dataUp = userClient.orders[index]
+                dataUp[0].status.push(fix.statusOrder.status_6 + ' / ' + dateAndTime())
+                userClient.ordersArhiv.push(dataUp)
+                userClient.orders.splice(index, 1)
+
+
+                const keyboardAdmin = [
+                    [{text: '✅Обработка', callback_data: `zero`}, {text: '✅Отправлен', callback_data: `zero`}, {text: '✅Прибыл', callback_data: `zero`}],
+                    [{text: '❌Забит хуй', callback_data: `zero`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.look, `myArhiv|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_6}"`, {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'cancelByShop'){
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const index = userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))
+                const dataUp = userClient.orders[index]
+                dataUp[0].status.push(fix.statusOrder.status_7 + ' / ' + dateAndTime())
+                userClient.ordersArhiv.push(dataUp)
+                userClient.orders.splice(index, 1)
+
+
+                const keyboardAdmin = [
+                    [{text: fix.statusOrder.status_7, callback_data: `zero`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.look, `myArhiv|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_7}"`, {...keyboard_1}).catch(fix.errorDone)
+                await userClient.save()
+            }
+            else if(value.split('|')[0] == 'cancelByClient'){
+                const userClient = await User.findOne({id: Number(value.split('|')[1])})
+                const index = userClient.orders.findIndex(item => item[0].globalNumber == Number(value.split('|')[2]))
+                const dataUp = userClient.orders[index]
+                dataUp[0].status.push(fix.statusOrder.status_8 + ' / ' + dateAndTime())
+                userClient.ordersArhiv.push(dataUp)
+                userClient.orders.splice(index, 1)
+
+
+                const keyboardAdmin = [
+                    [{text: fix.statusOrder.status_8, callback_data: `zero`}]
+                ]
+                await ctx.editMessageReplyMarkup({inline_keyboard: keyboardAdmin}).catch(fix.errorDone)
+
+                const keyboard_1 = Markup.inlineKeyboard([
+                    Markup.button.callback(fix.look, `myArhiv|${Number(value.split('|')[2])}`)
+                ])
+
+                await bot.telegram.editMessageText(userClient.id, userClient.lastMes, Number(value.split('|')[2]), `Статус заказа #${value.split('|')[2]} изменился на:\n"${fix.statusOrder.status_8}"`, {...keyboard_1}).catch(fix.errorDone)
                 await userClient.save()
             }
         }

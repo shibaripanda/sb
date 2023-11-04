@@ -61,7 +61,7 @@ export const orderDone = async (user) => {
             await Data.updateOne({data: 'data'}, {$inc: {globalNumber: 1, countOrders: 1}}, {upsert: true})
             orderActiv[0].globalNumber = (await Data.findOne({data: 'data'}, {globalNumber: 1, _id: 0})).globalNumber
             orderActiv[0].time = dateAndTime()
-            orderActiv[0].status = [fix.statusOrder.status_1 + '/' + dateAndTime()]
+            orderActiv[0].status = [fix.statusOrder.status_1 + ' / ' + dateAndTime()]
             orderActiv[0].shipping = 'Данные для отправки:\n' +
                                     user.surname[user.surname.length - 1] + '\n' +
                                     user.name[user.name.length - 1] + '\n' +
@@ -98,7 +98,7 @@ export const orderDone = async (user) => {
                 return Markup.button.callback(`but`, `cart`, 'hide')
             }
 
-            text = 'Заказ создан!'
+            text = `Заказ #${orderActiv[0].globalNumber} создан!`
             keyboard = Markup.inlineKeyboard([
                 [Markup.button.callback('Отменить', `cancelOrder|${user.orders.length - 1}`)],
                 [Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${await summa()} руб)`, `myOrders`)],

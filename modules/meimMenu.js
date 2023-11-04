@@ -38,6 +38,20 @@ export const meinMenuDisplay = async (user) => {
             keyboardArray.push([Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${await summa()} руб)`, `myOrders`)])     
         }
 
+        if(user.ordersArhiv.length > 0){
+
+            const summa = async () => {
+                return await user.ordersArhiv.reduce(async function(a, b){
+                    return await a + b.reduce(function(x, y){
+                        return x + (y.price * y.inch)
+                    }, 0)
+                }, 0)
+            }
+
+            keyboardArray.push([Markup.button.callback(fix.arhiv + ` (${user.ordersArhiv.length} шт, ${await summa()} руб)`, `myArhiv`)])     
+        }
+
+
         return Markup.inlineKeyboard(keyboardArray)
     }   
     catch(e){
