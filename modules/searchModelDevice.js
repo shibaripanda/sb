@@ -1,4 +1,4 @@
-import { Accum } from "../models/Accum.js"
+import { Accum } from "./models/Accum.js"
 
 export const resultSearch = async (baza, text, reultCount) => {
     let res

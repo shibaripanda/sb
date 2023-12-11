@@ -1,47 +1,49 @@
 import ExcelJS from 'exceljs'
-import { Accum } from "../models/Accum.js"
-import { Device } from "../models/Device.js"
+import { Accum } from "./models/Accum.js"
+import { Device } from "./models/Device.js"
 import fs  from "fs"
+import { fix } from './fixConst.js'
 
 export const upDateBaza = async () => {
     const workbook = new ExcelJS.Workbook()
     await workbook.xlsx.readFile('./baza/baza1.xlsx')
     workbook.eachSheet(async function(worksheet, sheetId) {
 
-        const sheet = workbook.getWorksheet(worksheet.name)
+        // const sheet = workbook.getWorksheet(worksheet.name)
 
         if(worksheet.name.includes('Аккумуляторы')){
         // if(!worksheet.name.includes('Информация')){
-            console.log(worksheet.name)
+            
             for(let i = 3; i < 10000; i++){
+                console.log(i)
                 let data
                 if(worksheet.name.includes('Аккумуляторы')){
                     data = {
                         rowExist: worksheet.getCell('A' + i).value,
                         model: worksheet.getCell('B' + i).value,
-                        price: worksheet.getCell('C' + i).value,
+                        price: ((Number(worksheet.getCell('C' + i).value) * fix.skv) + fix.profit) + fix.ship,
                         exist: worksheet.getCell('E' + i).value
                     }
                 }
-                else{
-                    const imageArray = worksheet.getImages()
-                    const image = imageArray.find(item => item.range.tl.nativeRow == i - 1)
-                    let path = 'empty' 
-                    if(image){
-                        const img = workbook.model.media.find(item => item.index === image.imageId)
-                        path = `./images/${image.imageId}.${img.extension}`
-                        fs.writeFileSync(path, img.buffer)
-                    }
+                // else{
+                //     const imageArray = worksheet.getImages()
+                //     const image = imageArray.find(item => item.range.tl.nativeRow == i - 1)
+                //     let path = 'empty' 
+                //     if(image){
+                //         const img = workbook.model.media.find(item => item.index === image.imageId)
+                //         path = `./images/${image.imageId}.${img.extension}`
+                //         fs.writeFileSync(path, img.buffer)
+                //     }
 
-                    data = {
-                        idProd: worksheet.name,
-                        rowExist: worksheet.getCell('A' + i).value,
-                        image: path,
-                        model: worksheet.getCell('C' + i).value,
-                        price: worksheet.getCell('D' + i).value,
-                        exist: worksheet.getCell('F' + i).value
-                    }
-                }
+                //     data = {
+                //         idProd: worksheet.name,
+                //         rowExist: worksheet.getCell('A' + i).value,
+                //         image: path,
+                //         model: worksheet.getCell('C' + i).value,
+                //         price: (worksheet.getCell('D' + i).value * fix.skv),
+                //         exist: worksheet.getCell('F' + i).value
+                //     }
+                // }
                 if(data.rowExist !== null){
                     if(typeof(data.price) == 'number' && data.exist !== 0){
                     
@@ -50,9 +52,9 @@ export const upDateBaza = async () => {
                         if(worksheet.name.includes('Аккумуляторы')){
                             product = await Accum.findOne({model: data.model})
                         }
-                        else{
-                            product = await Device.findOne({model: data.model})
-                        }
+                        // else{
+                        //     product = await Device.findOne({model: data.model})
+                        // }
 
                         if(product){
                             product.price = data.price
@@ -62,9 +64,9 @@ export const upDateBaza = async () => {
                             if(worksheet.name.includes('Аккумуляторы')){
                                 product = await Accum({model: data.model, price: data.price})
                             }
-                            else{
-                                product = await Device({model: data.model, price: data.price, image: data.image, idProd: data.idProd})
-                            }
+                            // else{
+                            //     product = await Device({model: data.model, price: data.price, image: data.image, idProd: data.idProd})
+                            // }
                             await product.save()
                         } 
                     }    
@@ -73,6 +75,7 @@ export const upDateBaza = async () => {
                     i = 10001
                 }
             }
+            console.log(worksheet.name)
         }
     })
 }

@@ -1,6 +1,7 @@
 import { Markup } from "telegraf"
-import { Accum } from "../models/Accum.js"
+import { Accum } from "./models/Accum.js"
 import { perenos } from "./perenos.js"
+import { fix } from "./fixConst.js"
 
 // const funBut = async (item, count, name) => {
 
@@ -77,7 +78,7 @@ export const userInfo = async (user) => {
             const device = await Accum.findOne({_id: i.origId})
             if(device){
                 const sum = device.price * i.inch
-                listTovar = listTovar + `\n<b>▪️#${step}</b>\n${await perenos(device.model)}\n<b>Количество:</b> ${i.inch} шт.\n<b>Сумма:</b> ${sum} руб.\n`
+                listTovar = listTovar + `\n<b>▪️#${step}</b>\n${await perenos(device.model)}\n<b>Количество:</b> ${i.inch} шт.\n<b>Сумма:</b> ${sum} ${fix.valut}\n`
                 step++
             }
             else{
@@ -95,13 +96,13 @@ export const userInfo = async (user) => {
             return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
         }
 
-        orderDetails = listTovar + `\n<b>Итого:</b> ${await summaTovar()} шт на общую сумму ${await summa()} руб.`
+        orderDetails = listTovar + `\n<b>Итого:</b> ${await summaTovar()} шт на общую сумму ${await summa()} ${fix.valut}`
     }
     else{
         const device = await Accum.findOne({_id: user.orderHot.split('|')[1]})
         if(device){
            const sum = device.price * Number(user.orderHot.split('|')[2])
-           orderDetails = `${await perenos(device.model)}\n<b>Количество:</b> ${user.orderHot.split('|')[2]} шт.\n<b>Сумма:</b> ${sum} руб.` 
+           orderDetails = `${await perenos(device.model)}\n<b>Количество:</b> ${user.orderHot.split('|')[2]} шт.\n<b>Сумма:</b> ${sum} ${fix.valut}` 
         }
         else{
             haveOrder = false

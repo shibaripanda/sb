@@ -1,7 +1,7 @@
-import { fix } from "../fixConst.js"
+import { fix } from "./fixConst.js"
 import { Markup } from "telegraf"
 import { perenos } from "./perenos.js"
-import { Accum } from "../models/Accum.js"
+import { Accum } from "./models/Accum.js"
 
 const funBut = async (item, count, name) => {
 
@@ -54,7 +54,7 @@ export const pageSearchResultKeyboardAndText = async (user) => {
             }       
         }
         
-        text = await perenos(item.model) + '\n' + item.price + '\n' + cartInbox
+        text = await perenos(item.model) + '\n' + item.price + ' '+ fix.valut + '\n' + cartInbox
     }
     else{
         keyboard = Markup.inlineKeyboard([Markup.button.callback(fix.textBack, `menu`)])

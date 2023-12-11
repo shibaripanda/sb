@@ -1,4 +1,4 @@
-import { Accum } from "../models/Accum.js"
+import { Accum } from "./models/Accum.js"
 
 export const updateCart = async (user) => {
     const oldCart = user.cart.slice(0)

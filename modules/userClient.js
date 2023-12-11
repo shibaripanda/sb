@@ -1,5 +1,5 @@
-import { User } from "../models/User.js"
-import { Data } from "../models/Data.js"
+import { User } from "./models/User.js"
+import { Data } from "./models/Data.js"
 
 export const userClient = async (ctx) => {
     let user = await User.findOne({id: ctx.from.id})

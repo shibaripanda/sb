@@ -1,10 +1,10 @@
 import { Markup } from "telegraf"
-import { Accum } from "../models/Accum.js"
-import { User } from "../models/User.js"
-import { fix } from "../fixConst.js"
+import { Accum } from "./models/Accum.js"
+import { User } from "./models/User.js"
+import { fix } from "./fixConst.js"
 import { dateAndTime } from "./dateTime.js"
-import { orderMenu } from "./menuOrder.js"
-import { Data } from "../models/Data.js"
+import { orderMenu } from "./menuModules/menuOrder.js"
+import { Data } from "./models/Data.js"
 
 export const orderDone = async (user) => {
     try{
@@ -93,7 +93,7 @@ export const orderDone = async (user) => {
                     const summaTovar = async () => {
                         return await user.cart.map(item => item.inch).reduce(function(a, b){return a + b}, 0)
                     }
-                    return Markup.button.callback(fix.сart + ` (${await summaTovar()} шт, ${await summa()} руб)`, `cart`)
+                    return Markup.button.callback(fix.сart + ` (${await summaTovar()} шт, ${(await summa()).toFixed(2)} ${fix.valut})`, `cart`)
                 }
                 return Markup.button.callback(`but`, `cart`, 'hide')
             }
@@ -101,7 +101,7 @@ export const orderDone = async (user) => {
             text = `Заказ #${orderActiv[0].globalNumber} создан!`
             keyboard = Markup.inlineKeyboard([
                 [Markup.button.callback('Отменить', `cancelOrder|${user.orders.length - 1}`)],
-                [Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${await summa()} руб)`, `myOrders`)],
+                [Markup.button.callback('Заказы' + ` (${user.orders.length} шт, ${(await summa()).toFixed(2)} ${fix.valut})`, `myOrders`)],
                 [await cart(user)],
                 [Markup.button.callback('Меню', `menu`)]
             ])
